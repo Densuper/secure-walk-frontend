@@ -3,6 +3,8 @@ const { initializeDB } = require('./database'); // Import initializeDB
 const authRoutes = require('./routes/authRoutes'); // Import auth routes
 const scanRoutes = require('./routes/scanRoutes'); // Import scan routes
 const userRoutes = require('./routes/userRoutes'); // Import user routes
+const adminUserRoutes = require('./routes/adminUserRoutes'); // Import admin user routes
+const checkpointRoutes = require('./routes/checkpointRoutes'); // Import checkpoint routes
 const app = express();
 const port = process.env.PORT || 3000;
 
