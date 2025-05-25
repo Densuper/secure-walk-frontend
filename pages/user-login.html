@@ -48,19 +48,40 @@
   <input type="text" placeholder="Username" id="username">
   <input type="password" placeholder="Password" id="password">
   <button onclick="login()">Login</button>
+  <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
 
   <script>
-    function login() {
-      const user = document.getElementById('username').value;
-      const pass = document.getElementById('password').value;
+    async function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorMessageElement = document.getElementById("errorMessage");
+      errorMessageElement.textContent = ''; // Clear previous error messages
 
-      // Temporary dummy check (replace with backend auth later)
-      if (user === "user" && pass === "1234") {
-        alert("Login successful!");
-        // Redirect to dashboard (you'll create this next)
-        location.href = "user-dashboard.html";
-      } else {
-        alert("Invalid credentials");
+      if (!username || !password) {
+        errorMessageElement.textContent = "Please enter both username and password.";
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('authToken', data.token);
+          window.location.href = "user-dashboard.html";
+        } else {
+          errorMessageElement.textContent = data.message || 'Login failed. Please try again.';
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        errorMessageElement.textContent = 'An error occurred during login. Please try again later.';
       }
     }
   </script>

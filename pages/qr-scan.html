@@ -66,19 +66,51 @@
 
     const html5QrCode = new Html5Qrcode("reader");
 
-    function onScanSuccess(decodedText, decodedResult) {
+    async function onScanSuccess(decodedText, decodedResult) { // Made async
+      const resultElement = document.getElementById("result");
+      
       // Stop scanning after first scan
-      html5QrCode.stop().then(() => {
-        document.getElementById("result").innerText = "Scanned: " + decodedText;
+      try {
+        await html5QrCode.stop();
+        console.log("QR Code scanning stopped.");
+      } catch (err) {
+        console.error("Failed to stop QR Code scanning.", err);
+        // Potentially display an error to the user, but for now, we'll proceed with API call
+      }
 
-        // Save scanned checkpoint to localStorage (optional)
-        let history = JSON.parse(localStorage.getItem("walkHistory") || "[]");
-        history.push({
-          id: decodedText,
-          time: new Date().toLocaleString()
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        resultElement.innerText = "Error: User not authenticated. Please login again.";
+        resultElement.style.color = "red";
+        return;
+      }
+
+      resultElement.innerText = "Processing scan..."; // Intermediate message
+
+      try {
+        const response = await fetch('/api/scan', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+          },
+          body: JSON.stringify({ qr_code_identifier: decodedText }),
         });
-        localStorage.setItem("walkHistory", JSON.stringify(history));
-      });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          resultElement.innerText = `Successfully scanned: ${data.checkpoint.name || decodedText}`;
+          resultElement.style.color = "green";
+        } else {
+          resultElement.innerText = `Error: ${data.message || 'Scan failed. Please try again.'}`;
+          resultElement.style.color = "red";
+        }
+      } catch (error) {
+        console.error('Scan API error:', error);
+        resultElement.innerText = 'An error occurred while submitting the scan. Please try again later.';
+        resultElement.style.color = "red";
+      }
     }
 
     function onScanError(errorMessage) {

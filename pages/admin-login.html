@@ -48,19 +48,40 @@
   <input type="text" placeholder="Admin Username" id="adminUser">
   <input type="password" placeholder="Password" id="adminPass">
   <button onclick="adminLogin()">Login</button>
+  <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
 
   <script>
-    function adminLogin() {
-      const user = document.getElementById('adminUser').value;
-      const pass = document.getElementById('adminPass').value;
+    async function adminLogin() {
+      const username = document.getElementById('adminUser').value;
+      const password = document.getElementById('adminPass').value;
+      const errorMessageElement = document.getElementById("errorMessage");
+      errorMessageElement.textContent = ''; // Clear previous error messages
 
-      // Temporary dummy check (replace with backend auth later)
-      if (user === "admin" && pass === "admin") {
-        alert("Admin login successful!");
-        // Redirect to admin dashboard (create this later)
-        location.href = "admin-dashboard.html";
-      } else {
-        alert("Invalid admin credentials");
+      if (!username || !password) {
+        errorMessageElement.textContent = "Please enter both username and password.";
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/admin/login', { // Changed to /api/admin/login
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('adminAuthToken', data.token); // Changed to adminAuthToken
+          window.location.href = "admin-dashboard.html";
+        } else {
+          errorMessageElement.textContent = data.message || 'Admin login failed. Please try again.';
+        }
+      } catch (error) {
+        console.error('Admin login error:', error);
+        errorMessageElement.textContent = 'An error occurred during admin login. Please try again later.';
       }
     }
   </script>

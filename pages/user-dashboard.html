@@ -97,20 +97,13 @@
     <div class="progress-bar"></div>
   </div>
 
-  <div class="checkpoint completed">
-    <span>Checkpoint A</span>
-    <span>Completed</span>
+  <div id="scanHistoryContainer">
+    <!-- Static checkpoints will be cleared and replaced by dynamic data -->
+    <div class="checkpoint completed">
+      <span>Loading scan history...</span>
+    </div>
   </div>
-
-  <div class="checkpoint pending">
-    <span>Checkpoint B</span>
-    <button onclick="cancelWalk()">Cancel</button>
-  </div>
-
-  <div class="checkpoint pending">
-    <span>Checkpoint C</span>
-    <button onclick="cancelWalk()">Cancel</button>
-  </div>
+  <div id="dashboardError" style="color: red; text-align: center; margin-top: 10px;"></div>
 
   <div class="button-group">
     <button class="action-btn" onclick="window.location.href='qr-scan.html'">Scan QR Code</button>
@@ -118,12 +111,75 @@
   </div>
 
   <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem('authToken');
+      const errorElement = document.getElementById('dashboardError');
+      const scanHistoryContainer = document.getElementById('scanHistoryContainer');
+
+      if (!token) {
+        errorElement.textContent = 'Authentication error. Please login again.';
+        // Optional: Redirect to login after a delay
+        setTimeout(() => { window.location.href = 'user-login.html'; }, 2000);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/user/dashboard-data', {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.status === 401) { // Unauthorized (e.g. token expired)
+          localStorage.removeItem('authToken'); // Clear invalid token
+          errorElement.textContent = 'Session expired. Please login again.';
+          setTimeout(() => { window.location.href = 'user-login.html'; }, 2000);
+          return;
+        }
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `Error fetching data: ${response.status}`);
+        }
+
+        const data = await response.json();
+        scanHistoryContainer.innerHTML = ''; // Clear "Loading..." or old static content
+
+        if (data.scans && data.scans.length > 0) {
+          data.scans.forEach(scan => {
+            const scanElement = document.createElement('div');
+            scanElement.classList.add('checkpoint', 'completed'); // Mark all fetched as completed for now
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = scan.checkpoint_name;
+            
+            const timeSpan = document.createElement('span');
+            timeSpan.textContent = `Scanned: ${new Date(scan.scan_timestamp).toLocaleString()}`;
+            
+            scanElement.appendChild(nameSpan);
+            scanElement.appendChild(timeSpan);
+            scanHistoryContainer.appendChild(scanElement);
+          });
+        } else {
+          scanHistoryContainer.innerHTML = '<div class="checkpoint"><p>No scans found yet. Start scanning!</p></div>';
+        }
+
+      } catch (error) {
+        console.error('Dashboard error:', error);
+        errorElement.textContent = error.message || 'Failed to load dashboard data.';
+      }
+    });
+
     function cancelWalk() {
+      // This function is currently not used with dynamic data, can be removed or repurposed
       alert("Walk cancelled. Reason will be required later.");
     }
 
     function logout() {
       if (confirm("Are you sure you want to log out?")) {
+        localStorage.removeItem('authToken'); // Clear the token on logout
         window.location.href = "index.html";
       }
     }
