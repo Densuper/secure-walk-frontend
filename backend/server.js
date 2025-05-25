@@ -23,6 +23,8 @@ app.get('/api/status', (req, res) => {
   res.json({ status: 'Backend is running' });
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
+
+module.exports = { app, server };
