@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Walk Details</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .walk-summary {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .walk-summary p {
+      margin: 5px 0;
+    }
+
+    .checkpoints {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .checkpoints h2 {
+      margin-top: 0;
+    }
+
+    .checkpoint-entry {
+      margin-bottom: 10px;
+      padding: 10px;
+      background: #e9ecef;
+      border-radius: 5px;
+    }
+
+    .checkpoint-entry p {
+      margin: 0;
+    }
+
+    button {
+      padding: 8px 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Walk Details</h1>
+
+    <!-- Walk Summary Section -->
+    <div class="walk-summary">
+      <p><strong>Date:</strong> 2025-05-18</p>
+      <p><strong>Time:</strong> 07:30 AM</p>
+      <p><strong>Status:</strong> Completed</p>
+      <p><strong>Total Time:</strong> 45 minutes</p>
+      <p><strong>Notes:</strong> Everything went smoothly, no issues.</p>
+    </div>
+
+    <!-- Checkpoints Section -->
+    <div class="checkpoints">
+      <h2>Checkpoints</h2>
+
+      <!-- Checkpoint 1 -->
+      <div class="checkpoint-entry">
+        <p><strong>Checkpoint 1:</strong> Gate Entrance</p>
+        <p>Status: Scanned</p>
+      </div>
+
+      <!-- Checkpoint 2 -->
+      <div class="checkpoint-entry">
+        <p><strong>Checkpoint 2:</strong> Main Hall</p>
+        <p>Status: Scanned</p>
+      </div>
+
+      <!-- Checkpoint 3 -->
+      <div class="checkpoint-entry">
+        <p><strong>Checkpoint 3:</strong> Back Door</p>
+        <p>Status: Not Scanned</p>
+      </div>
+
+      <button onclick="goBack()">Go Back</button>
+    </div>
+  </div>
+
+  <script>
+    function goBack() {
+      window.history.back();
+    }
+  </script>
+</body>
+</html>

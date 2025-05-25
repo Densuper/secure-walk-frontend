@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Login - Secure Walkways</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #181818;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h2 {
+      margin-bottom: 30px;
+    }
+    input {
+      padding: 12px;
+      margin: 10px 0;
+      width: 80%;
+      max-width: 300px;
+      border-radius: 8px;
+      border: none;
+    }
+    button {
+      padding: 12px;
+      width: 80%;
+      max-width: 300px;
+      background-color: #ff4d4d;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover {
+      background-color: #cc0000;
+    }
+  </style>
+</head>
+<body>
+  <h2>Admin Login</h2>
+  <input type="text" placeholder="Admin Username" id="adminUser">
+  <input type="password" placeholder="Password" id="adminPass">
+  <button onclick="adminLogin()">Login</button>
+  <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
+
+  <script>
+    async function adminLogin() {
+      const username = document.getElementById('adminUser').value;
+      const password = document.getElementById('adminPass').value;
+      const errorMessageElement = document.getElementById("errorMessage");
+      errorMessageElement.textContent = ''; // Clear previous error messages
+
+      if (!username || !password) {
+        errorMessageElement.textContent = "Please enter both username and password.";
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/admin/login', { // Changed to /api/admin/login
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('adminAuthToken', data.token); // Changed to adminAuthToken
+          window.location.href = "admin-dashboard.html";
+        } else {
+          errorMessageElement.textContent = data.message || 'Admin login failed. Please try again.';
+        }
+      } catch (error) {
+        console.error('Admin login error:', error);
+        errorMessageElement.textContent = 'An error occurred during admin login. Please try again later.';
+      }
+    }
+  </script>
+</body>
+</html>
