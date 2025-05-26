@@ -1,41 +1,6 @@
 // scripts/app.js
 
 /**
- * Handles user login.
- * (Placeholder - full implementation in a later step)
- * @param {string} username - The username.
- * @param {string} password - The user's password.
- * @returns {object} An object with success status, and role or message.
- *                   e.g., { success: true, role: 'admin' } or { success: false, message: 'Invalid credentials' }
- */
-function loginUser(username, password) {
-  console.log(`Attempting login for user: ${username}`);
-  // Ensure data.js is loaded and getUsers is available
-  if (typeof getUsers !== 'function') {
-    console.error("getUsers function is not available. Make sure data.js is loaded before app.js.");
-    return { success: false, message: 'System error: User data service not available.' };
-  }
-  const users = getUsers();
-  const user = users.find(u => u.username === username);
-
-  // Using direct password comparison as per current data structure
-  if (user && user.password === password) {
-    const currentUserData = { username: user.username, role: user.role };
-    localStorage.setItem('currentUser', JSON.stringify(currentUserData));
-    // Logging of successful login will be handled by the calling page (user-login.html/admin-login.html)
-    // This is because the log message is slightly different for user vs admin.
-    console.log(`User ${username} credentials valid. Role: ${user.role}`);
-    return { success: true, role: user.role };
-  } else {
-    // Do not log event here, let the calling page do it with more context if needed,
-    // or just rely on the console log for failed attempts.
-    // logEvent(username, 'LOGIN_FAIL', 'Invalid username or password.'); // Moved to calling page if specific
-    console.log(`Login failed for user: ${username}. Invalid username or password.`);
-    return { success: false, message: 'Invalid username or password.' };
-  }
-}
-
-/**
  * Handles user logout by clearing current user from localStorage and redirecting.
  */
 function logoutUser() {
@@ -227,73 +192,77 @@ function cancelUserWalk(walkId, reason) {
  * @returns {object} Result object e.g. `{ success: true, message: 'Checkpoint updated.', walkCompleted: false }`
  *                   or `{ success: false, message: 'Error details' }`
  */
-function updateCheckpointStatus(walkId, checkpointId, scannedAtTimestamp) {
-  console.log(`Attempting to update checkpoint ${checkpointId} for walk ${walkId} at ${scannedAtTimestamp}.`);
-  let allWalks = getWalks();
-  const walkIndex = allWalks.findIndex(w => w.id === walkId);
+async function updateCheckpointStatus(walkId, checkpointId, scannedAtTimestamp) {
+  console.log(`Attempting to update checkpoint ${checkpointId} for walk ${walkId} via API at ${scannedAtTimestamp}.`);
+  const userAuthToken = localStorage.getItem('userAuthToken');
+  const currentUser = getCurrentUser(); // To get username for logging
+  const username = currentUser ? currentUser.username : 'unknown_user';
 
-  if (walkIndex === -1) {
-    const failMsg = `Walk ${walkId} not found.`;
-    logEvent(getCurrentUser()?.username || 'system_scan_event', 'UPDATE_CHECKPOINT_FAIL', failMsg + ` Checkpoint ID: ${checkpointId}`);
-    console.error(failMsg);
-    return { success: false, message: failMsg };
+  if (!userAuthToken) {
+    const errorMsg = 'User authentication token not found. Cannot scan checkpoint.';
+    console.error(errorMsg);
+    logEvent(username, 'UPDATE_CHECKPOINT_FAIL', `${errorMsg} Walk ID: ${walkId}, Checkpoint: ${checkpointId}`);
+    return { success: false, message: errorMsg };
   }
 
-  const walk = allWalks[walkIndex];
-
-  if (walk.status !== 'ongoing') {
-    const failMsg = `Walk ${walkId} is not ongoing (status: ${walk.status}). Cannot update checkpoint.`;
-    logEvent(walk.userId, 'UPDATE_CHECKPOINT_FAIL', failMsg + ` Checkpoint ID: ${checkpointId}`);
-    console.warn(failMsg);
-    return { success: false, message: failMsg };
+  if (!checkpointId) {
+    const errorMsg = 'Checkpoint ID (QR Code Identifier) is required.';
+    console.error(errorMsg);
+    logEvent(username, 'UPDATE_CHECKPOINT_FAIL', `${errorMsg} Walk ID: ${walkId}`);
+    return { success: false, message: errorMsg };
   }
 
-  const checkpointScan = walk.checkpointScans.find(cs => cs.checkpointId === checkpointId);
+  try {
+    const response = await fetch('/api/scan', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${userAuthToken}`,
+      },
+      body: JSON.stringify({ qr_code_identifier: checkpointId }),
+    });
 
-  if (!checkpointScan) {
-    const failMsg = `Checkpoint ${checkpointId} not found in walk ${walkId}.`;
-    logEvent(walk.userId, 'UPDATE_CHECKPOINT_FAIL', failMsg);
-    console.warn(failMsg);
-    return { success: false, message: failMsg };
+    const responseData = await response.json();
+
+    if (response.ok) { // Typically 200 or 201 for successful POST
+      logEvent(
+        username,
+        'CHECKPOINT_SCANNED_API_SUCCESS',
+        `Checkpoint ${checkpointId} scanned successfully for walk ${walkId} via API. Message: ${responseData.message}. Walk completed: ${responseData.walk_completed}`
+      );
+      console.log(`Checkpoint ${checkpointId} for walk ${walkId} updated via API. Response:`, responseData);
+      
+      // As per instructions, minimize local storage manipulation.
+      // The backend now handles walk state. The frontend should ideally refetch walk data.
+      // For now, we return success and the walkCompleted status from the API.
+      // If the API confirms the scan and implies walk completion, the calling UI can use this.
+      // No direct setWalks() or modification of local 'allWalks' here.
+
+      return {
+        success: true,
+        message: responseData.message || `Checkpoint ${checkpointId} scanned successfully via API.`,
+        walkCompleted: responseData.walk_completed || false, // Assuming API returns this field
+        scanDetails: responseData.scan // Include scan details from response
+      };
+    } else {
+      const errorMsg = `API error: ${responseData.message || response.statusText}`;
+      console.error(`Failed to update checkpoint ${checkpointId} for walk ${walkId} via API. Status: ${response.status}. Message: ${responseData.message}`);
+      logEvent(
+        username,
+        'UPDATE_CHECKPOINT_FAIL_API',
+        `Failed to scan checkpoint ${checkpointId} for walk ${walkId} via API. Status: ${response.status}. Error: ${responseData.message || 'Unknown API error'}`
+      );
+      return { success: false, message: errorMsg };
+    }
+  } catch (error) {
+    console.error(`Network or other error when scanning checkpoint ${checkpointId} for walk ${walkId} via API:`, error);
+    logEvent(
+      username,
+      'UPDATE_CHECKPOINT_FAIL_NETWORK',
+      `Network error or client-side issue scanning checkpoint ${checkpointId} for walk ${walkId}. Error: ${error.message}`
+    );
+    return { success: false, message: `Network error or client-side issue: ${error.message}` };
   }
-
-  if (checkpointScan.status === 'scanned') {
-    const infoMsg = `Checkpoint ${checkpointId} in walk ${walkId} has already been scanned.`;
-    // Not necessarily an error, but good to inform. No log event needed unless specified.
-    console.info(infoMsg);
-    return { success: false, message: infoMsg, alreadyScanned: true };
-  }
-
-  // Update checkpoint
-  checkpointScan.status = 'scanned';
-  checkpointScan.scannedAt = scannedAtTimestamp; // Use provided timestamp
-
-  // Update walk progress
-  walk.progress = calculateWalkProgress(walkId, allWalks);
-
-  // Check if all checkpoints are now scanned
-  const allCheckpointsScanned = walk.checkpointScans.every(cs => cs.status === 'scanned');
-  let walkCompleted = false;
-
-  if (allCheckpointsScanned) {
-    walk.status = 'completed';
-    walk.endTime = new Date().toISOString();
-    walkCompleted = true;
-    logEvent(walk.userId, 'WALK_COMPLETED', `Walk ${walkId} completed. All checkpoints scanned.`);
-    console.log(`Walk ${walkId} completed.`);
-  }
-
-  allWalks[walkIndex] = walk; // Update the walk in the array
-  setWalks(allWalks); // Save the entire updated walks array
-
-  logEvent(walk.userId, 'CHECKPOINT_SCANNED', `Checkpoint ${checkpointId} scanned for walk ${walkId}.`);
-  console.log(`Checkpoint ${checkpointId} for walk ${walkId} updated to scanned.`);
-  
-  return { 
-    success: true, 
-    message: `Checkpoint ${checkpointId} scanned successfully.`,
-    walkCompleted: walkCompleted 
-  };
 }
 
 /**

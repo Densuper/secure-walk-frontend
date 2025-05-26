@@ -10,12 +10,12 @@ function initializeData() {
       {
         username: 'admin',
         role: 'admin',
-        password: 'hashed_password_placeholder', // In a real app, use a strong hashing algorithm
+        // password: 'hashed_password_placeholder', // In a real app, use a strong hashing algorithm
       },
       {
         username: 'user1',
         role: 'user',
-        password: 'hashed_password_placeholder',
+        // password: 'hashed_password_placeholder',
       },
     ];
     localStorage.setItem('users', JSON.stringify(sampleUsers));
