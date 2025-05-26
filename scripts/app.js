@@ -42,77 +42,121 @@ function getCurrentUser() {
  * @param {string} walkTemplateId - The ID of the walk template to use.
  * @returns {object | null} The newly created walk object or null if failed.
  */
-function startWalk(userId, walkTemplateId) {
-  console.log(`Attempting to start walk for user ${userId} with template ${walkTemplateId}.`);
+async function startWalk(userId, walkTemplateId) {
+  console.log(`Attempting to start walk for user ${userId} with template ${walkTemplateId} via API.`);
+  const userAuthToken = localStorage.getItem('userAuthToken');
+
+  if (!userAuthToken) {
+    console.error('User authentication token not found. Cannot start walk.');
+    logEvent(userId || 'unknown_user', 'START_WALK_FAIL_API', 'Auth token not found.');
+    return null;
+  }
 
   if (!userId || !walkTemplateId) {
-    logEvent(userId || 'unknown_user', 'START_WALK_FAIL', `User ID or Walk Template ID missing. Template: ${walkTemplateId}`);
-    console.error('User ID and Walk Template ID are required to start a walk.');
+    logEvent(userId || 'unknown_user', 'START_WALK_FAIL_API', `User ID or Walk Template ID missing. User: ${userId}, Template: ${walkTemplateId}`);
+    console.error('User ID (username) and Walk Template ID are required to start a walk.');
     return null;
   }
 
-  const users = getUsers();
-  const userExists = users.some(u => u.username === userId);
-  if (!userExists) {
-    logEvent(userId, 'START_WALK_FAIL', `User ${userId} not found.`);
-    console.error(`User ${userId} not found.`);
-    return null;
-  }
-
-  const templates = getWalkTemplates();
+  // Get checkpoint list from walkTemplateId using existing data.js function
+  // This is permissible for now as per instructions.
+  const templates = getWalkTemplates(); // from data.js
   const template = templates.find(t => t.id === walkTemplateId);
+
   if (!template) {
-    logEvent(userId, 'START_WALK_FAIL', `Walk template ${walkTemplateId} not found.`);
-    console.error(`Walk template ${walkTemplateId} not found.`);
+    const errorMsg = `Walk template ${walkTemplateId} not found locally. Cannot determine checkpoints.`;
+    console.error(errorMsg);
+    logEvent(userId, 'START_WALK_FAIL_API', errorMsg);
     return null;
   }
+  const checkpointQrIdentifiersArray = template.checkpoints; // e.g., ['CP001', 'CP002']
 
-  const newWalk = {
-    id: `walk_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`, // Unique walk ID
-    templateId: walkTemplateId,
-    userId: userId,
-    startTime: new Date().toISOString(),
-    endTime: null,
-    status: 'ongoing', // 'ongoing', 'completed', 'cancelled'
-    progress: 0, // Initial progress
-    checkpointScans: template.checkpoints.map(cpId => ({
-      checkpointId: cpId,
-      scannedAt: null,
-      status: 'pending', // 'pending', 'scanned', 'missed', 'unable_to_scan'
-      reason: null,     // Reason if missed or unable to scan
-    })),
-    cancellationReason: null, // For when the walk is cancelled
-  };
+  try {
+    const response = await fetch('/api/walk/start', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${userAuthToken}`,
+      },
+      body: JSON.stringify({
+        template_id: walkTemplateId,
+        checkpoints: checkpointQrIdentifiersArray,
+      }),
+    });
 
-  addWalk(newWalk); // From data.js
-  logEvent(userId, 'WALK_STARTED', `Walk ${newWalk.id} (Template: ${walkTemplateId}) started.`);
-  console.log(`Walk ${newWalk.id} started for user ${userId}.`);
-  return newWalk; // Return the full walk object
+    const responseData = await response.json();
+
+    if (response.ok) { // response.ok is true if status is 200-299 (e.g. 201 Created)
+      console.log(`Walk started successfully via API. Walk ID: ${responseData.walk_id}`, responseData);
+      // The backend returns { message, walk_id, status, walk_details }
+      // We should return the walk_details part if it exists, or the whole responseData if preferred.
+      // Based on controller, responseData contains walk_id and walk_details.
+      logEvent(userId, 'WALK_STARTED_API', `Walk ${responseData.walk_id} (Template: ${walkTemplateId}) started via API.`);
+      return responseData.walk_details || responseData; // Return the detailed walk object from API
+    } else {
+      const errorMsg = `API Error: ${responseData.message || response.statusText || response.status}`;
+      console.error('Failed to start walk via API:', response.status, responseData);
+      logEvent(userId, 'START_WALK_FAIL_API', errorMsg);
+      return null;
+    }
+  } catch (error) {
+    const errorMsg = `Network or client-side error: ${error.message}`;
+    console.error('Error starting walk via API:', error);
+    logEvent(userId, 'START_WALK_FAIL_API', errorMsg);
+    return null;
+  }
 }
 
 /**
  * Retrieves the most recent active (ongoing) walk for a given user.
- * @param {string} userId - The ID of the user.
+ * @param {string} userId - The ID of the user (username, primarily for logging).
  * @returns {object | null} The active walk object or null if none found.
  */
-function getActiveWalkForUser(userId) {
-  if (!userId) {
-    console.error("User ID is required to get active walk.");
-    return null;
-  }
-  const allWalks = getWalks();
-  const userActiveWalks = allWalks.filter(
-    walk => walk.userId === userId && walk.status === 'ongoing'
-  );
+async function getActiveWalkForUser(userId) { // userId is username, primarily for logging
+    const userAuthToken = localStorage.getItem('userAuthToken');
+    const currentUser = getCurrentUser(); // For logging username if userId param is not reliable
+    const loggingUsername = userId || (currentUser ? currentUser.username : 'unknown_user');
 
-  if (userActiveWalks.length === 0) {
-    return null;
-  }
+    if (!userAuthToken) {
+        console.error('User authentication token not found. Cannot fetch active walk.');
+        logEvent(loggingUsername, 'GET_ACTIVE_WALK_FAIL_API', 'Auth token not found.');
+        return null;
+    }
 
-  // Sort by startTime descending to get the most recent one
-  userActiveWalks.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
-  console.log(`Active walk found for user ${userId}: ${userActiveWalks[0].id}`);
-  return userActiveWalks[0];
+    console.log(`Attempting to fetch active walk from API for user ${loggingUsername}.`);
+
+    try {
+        const response = await fetch('/api/walk/active', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${userAuthToken}`,
+                'Content-Type': 'application/json', // Optional for GET, but good practice
+            },
+        });
+
+        const responseData = await response.json();
+
+        if (response.ok) { // response.ok is true if status is 200-299
+            if (responseData.active_walk) {
+                console.log(`Active walk data fetched from API for user ${loggingUsername}:`, responseData.active_walk);
+                logEvent(loggingUsername, 'GET_ACTIVE_WALK_SUCCESS_API', `Active walk ${responseData.active_walk.id} fetched.`);
+            } else {
+                console.log(`No active walk found via API for user ${loggingUsername}. Message: ${responseData.message}`);
+                logEvent(loggingUsername, 'GET_ACTIVE_WALK_NONE_API', responseData.message || 'No active walk found.');
+            }
+            return responseData.active_walk; // This will be the walk object or null
+        } else {
+            const errorDetail = `API Error: ${responseData.message || response.status}`;
+            console.error(`Failed to get active walk from API for user ${loggingUsername}:`, response.status, responseData);
+            logEvent(loggingUsername, 'GET_ACTIVE_WALK_FAIL_API', errorDetail);
+            return null;
+        }
+    } catch (error) {
+        const errorDetail = `Network or client-side error: ${error.message}`;
+        console.error(`Error fetching active walk from API for user ${loggingUsername}:`, error);
+        logEvent(loggingUsername, 'GET_ACTIVE_WALK_FAIL_API', errorDetail);
+        return null;
+    }
 }
 
 
@@ -121,19 +165,51 @@ function getActiveWalkForUser(userId) {
  * @param {string} walkId - The ID of the walk to retrieve.
  * @returns {object | null} The walk object or null if not found.
  */
-function getWalkDetails(walkId) {
-  if (!walkId) {
-    console.error("Walk ID is required to get walk details.");
-    return null;
-  }
-  const walks = getWalks(); // From data.js
-  const walk = walks.find(w => w.id === walkId);
+async function getWalkDetails(walkId) {
+    const userAuthToken = localStorage.getItem('userAuthToken');
+    const loggingUsername = getCurrentUser()?.username || 'unknown_user';
 
-  if (!walk) {
-    console.warn(`Walk with ID ${walkId} not found.`);
-    return null;
-  }
-  return walk;
+    if (!userAuthToken) {
+        console.error('User authentication token not found. Cannot fetch walk details.');
+        logEvent(loggingUsername, 'GET_WALK_DETAILS_FAIL_API', `Auth token not found for walk ${walkId}.`);
+        return null;
+    }
+
+    if (!walkId) {
+        console.error("Walk ID is required to get walk details from API.");
+        logEvent(loggingUsername, 'GET_WALK_DETAILS_FAIL_API', 'Walk ID not provided.');
+        return null;
+    }
+
+    console.log(`Attempting to fetch walk details from API for walk ID ${walkId}.`);
+
+    try {
+        const response = await fetch(`/api/walk/${walkId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${userAuthToken}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const responseData = await response.json();
+
+        if (response.ok) { // response.ok is true if status is 200-299
+            console.log(`Walk details fetched from API for walk ID ${walkId}:`, responseData.walk_details);
+            logEvent(loggingUsername, 'GET_WALK_DETAILS_SUCCESS_API', `Details for walk ${walkId} fetched successfully.`);
+            return responseData.walk_details;
+        } else {
+            const errorDetail = `API Error for walk ${walkId}: ${responseData.message || response.status}`;
+            console.error(`Failed to get walk details from API for walk ID ${walkId}:`, response.status, responseData);
+            logEvent(loggingUsername, 'GET_WALK_DETAILS_FAIL_API', errorDetail);
+            return null;
+        }
+    } catch (error) {
+        const errorDetail = `Network error fetching details for walk ${walkId}: ${error.message}`;
+        console.error(`Error fetching walk details from API for walk ID ${walkId}:`, error);
+        logEvent(loggingUsername, 'GET_WALK_DETAILS_FAIL_API', errorDetail);
+        return null;
+    }
 }
 
 /**
@@ -142,46 +218,52 @@ function getWalkDetails(walkId) {
  * @param {string} reason - The reason for cancellation.
  * @returns {object | null} The updated walk object or null if failed.
  */
-function cancelUserWalk(walkId, reason) {
-  if (!walkId || !reason) {
-    console.error("Walk ID and reason are required to cancel a walk.");
-    return null;
-  }
+async function cancelUserWalk(walkId, reason) {
+    const userAuthToken = localStorage.getItem('userAuthToken');
+    const username = getCurrentUser()?.username || 'unknown_user';
 
-  let walks = getWalks();
-  const walkIndex = walks.findIndex(w => w.id === walkId);
-
-  if (walkIndex === -1) {
-    logEvent('system', 'CANCEL_WALK_FAIL', `Walk ${walkId} not found for cancellation.`);
-    console.error(`Walk ${walkId} not found for cancellation.`);
-    return null;
-  }
-
-  const walkToUpdate = walks[walkIndex];
-
-  if (walkToUpdate.status !== 'ongoing') {
-    logEvent(walkToUpdate.userId, 'CANCEL_WALK_FAIL', `Walk ${walkId} is not ongoing, cannot cancel. Status: ${walkToUpdate.status}`);
-    console.warn(`Walk ${walkId} is not ongoing, cannot cancel. Status: ${walkToUpdate.status}`);
-    return null; // Or return the walk as is, indicating no change
-  }
-
-  walkToUpdate.status = 'cancelled';
-  walkToUpdate.endTime = new Date().toISOString();
-  walkToUpdate.cancellationReason = reason;
-  // Optionally, mark all pending checkpoints as 'missed' or 'cancelled'
-  walkToUpdate.checkpointScans.forEach(cs => {
-    if (cs.status === 'pending') {
-      cs.status = 'cancelled_walk'; // Or 'missed_due_to_cancellation'
+    if (!userAuthToken) {
+        console.error('User authentication token not found. Cannot cancel walk.');
+        logEvent(username, 'CANCEL_WALK_FAIL_API', `Auth token not found for cancelling walk ${walkId}.`);
+        return null;
     }
-  });
-  walkToUpdate.progress = calculateWalkProgress(walkId, walks); // Recalculate progress (likely 0 or low)
 
-  walks[walkIndex] = walkToUpdate;
-  setWalks(walks); // Save all walks back to localStorage via data.js
+    if (!walkId || !reason) {
+        console.error("Walk ID and reason are required to cancel a walk.");
+        logEvent(username, 'CANCEL_WALK_FAIL_API', `Walk ID or reason missing for cancelling walk ${walkId}. Walk ID: ${walkId}, Reason: ${reason}`);
+        return null;
+    }
 
-  logEvent(walkToUpdate.userId, 'WALK_CANCELLED', `Walk ${walkId} cancelled. Reason: ${reason}`);
-  console.log(`Walk ${walkId} for user ${walkToUpdate.userId} cancelled. Reason: ${reason}`);
-  return walkToUpdate;
+    console.log(`Attempting to cancel walk ${walkId} via API. Reason: ${reason}`);
+
+    try {
+        const response = await fetch(`/api/walk/${walkId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${userAuthToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ cancellationReason: reason }),
+        });
+
+        const responseData = await response.json();
+
+        if (response.ok) { // response.ok is true if status is 200-299
+            console.log(`Walk ${walkId} cancelled successfully via API. Reason: ${reason}`, responseData.walk_details);
+            logEvent(username, 'WALK_CANCELLED_API', `Walk ${walkId} cancelled via API. Reason: ${reason}`);
+            return responseData.walk_details; // API returns { message: '...', walk_details: {...} }
+        } else {
+            const errorMsg = `API Error cancelling walk ${walkId}: ${responseData.message || response.status}`;
+            console.error(`Failed to cancel walk ${walkId} via API:`, response.status, responseData);
+            logEvent(username, 'CANCEL_WALK_FAIL_API', errorMsg);
+            return null;
+        }
+    } catch (error) {
+        const errorMsg = `Network error cancelling walk ${walkId}: ${error.message}`;
+        console.error(`Error cancelling walk ${walkId} via API:`, error);
+        logEvent(username, 'CANCEL_WALK_FAIL_API', errorMsg);
+        return null;
+    }
 }
 
 /**

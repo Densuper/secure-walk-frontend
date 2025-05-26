@@ -5,6 +5,7 @@ const scanRoutes = require('./routes/scanRoutes'); // Import scan routes
 const userRoutes = require('./routes/userRoutes'); // Import user routes
 const adminUserRoutes = require('./routes/adminUserRoutes'); // Import admin user routes
 const checkpointRoutes = require('./routes/checkpointRoutes'); // Import checkpoint routes
+const walkRoutes = require('./routes/walkRoutes'); // Import walk routes
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -19,6 +20,8 @@ app.use('/api', authRoutes);
 app.use('/api', scanRoutes);
 // Mount user routes
 app.use('/api/user', userRoutes);
+// Mount walk routes
+app.use('/api', walkRoutes);
 
 
 app.get('/api/status', (req, res) => {
