@@ -19,7 +19,7 @@
 
     h1 {
       text-align: center;
-      color: #cc0000;
+      color: #333; /* Updated h1 color */
     }
 
     .card {
@@ -81,6 +81,57 @@
     function navigate(url) {
       window.location.href = url;
     }
+  </script>
+
+  <!-- Added Logout Button and Scripts -->
+  <div style="text-align: center; margin-top: 30px;">
+    <button id="adminLogoutButton" style="background-color: #6c757d; color: white; padding: 10px 20px;">Logout</button>
+  </div>
+
+  <script src="../scripts/data.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof initializeData === 'function') {
+        initializeData(); // Ensure data is initialized if needed by other scripts or linked pages
+      } else {
+        console.error("initializeData function not found. Ensure data.js is loaded.");
+      }
+
+      const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+
+      if (!currentUser || currentUser.role !== 'admin') {
+        alert("Access Denied. You are not authorized to view this page. Redirecting to login.");
+        window.location.href = 'admin-login.html'; // Redirect to admin login
+      } else {
+        // Display welcome message for the admin
+        const h1Element = document.querySelector('.dashboard h1');
+        if (h1Element) {
+          const welcomeEl = document.createElement('p');
+          welcomeEl.textContent = `Welcome, Admin ${currentUser.username}!`;
+          welcomeEl.style.textAlign = 'center';
+          welcomeEl.style.fontSize = '1.1em';
+          welcomeEl.style.color = '#555';
+          h1Element.insertAdjacentElement('afterend', welcomeEl);
+        }
+        console.log(`Admin user ${currentUser.username} authenticated.`);
+      }
+
+      const logoutButton = document.getElementById('adminLogoutButton');
+      if (logoutButton) {
+        logoutButton.addEventListener('click', function() {
+          if (typeof logoutUser === 'function') {
+            logoutUser(); // This function from app.js handles logging and redirection
+          } else {
+            console.error("logoutUser function not found. Ensure app.js is loaded.");
+            alert("Logout failed. Function not available.");
+            // Fallback logout
+            localStorage.removeItem('currentUser');
+            window.location.href = '../index.html';
+          }
+        });
+      }
+    });
   </script>
 </body>
 </html>

@@ -6,90 +6,197 @@
   <title>Reports & Logs</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #f5f5f5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7f6;
+      color: #333;
       margin: 0;
       padding: 20px;
     }
-
     .container {
-      max-width: 800px;
+      max-width: 1000px; /* Wider container for logs */
       margin: auto;
+      background-color: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
     }
-
     h1 {
       text-align: center;
-      color: #cc0000;
-    }
-
-    .log-entry {
-      background: #fff;
-      padding: 15px;
+      color: #333; /* Updated H1 color */
       margin-bottom: 10px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-
+    .admin-welcome {
+        text-align: center;
+        font-size: 1.1em;
+        color: #555;
+        margin-bottom: 25px;
+    }
+    #logEntriesContainer {
+        margin-top: 20px;
+        max-height: 60vh; /* Limit height and make scrollable */
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        padding: 15px;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+    }
+    .log-entry {
+      background: #e9ecef;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      border-left: 4px solid #6c757d; /* Grey accent for logs */
+      font-size: 0.9em;
+      line-height: 1.5;
+    }
     .log-entry p {
-      margin: 5px 0;
-      font-size: 15px;
+      margin: 4px 0;
+      word-break: break-word; /* Break long details strings */
     }
+    .log-entry strong { color: #495057; }
 
-    .download-btn {
-      display: block;
-      margin: 20px auto;
+    .action-buttons { /* Container for download and back buttons */
+        text-align: center;
+        margin-top: 25px;
+    }
+    .download-btn, .back-btn { /* Common styling for buttons */
       padding: 10px 18px;
-      background: #cc0000;
       color: white;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      text-align: center;
-    }
-
-    .download-btn:hover {
-      background: #990000;
-    }
-
-    .back-btn {
-      display: block;
-      margin-top: 20px;
-      text-align: center;
-      font-weight: bold;
-      color: #cc0000;
       text-decoration: none;
+      font-size: 1em;
+      margin: 0 10px;
+      transition: background-color 0.2s ease;
     }
+    .download-btn { background-color: #007bff; } /* Blue for download */
+    .download-btn:hover { background-color: #0056b3; }
+    .back-btn { background-color: #6c757d; } /* Grey for back */
+    .back-btn:hover { background-color: #5a6268; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Reports & Logs</h1>
+    <p class="admin-welcome" id="adminWelcomeMessage"></p>
 
-    <!-- Sample log entries -->
-    <div class="log-entry">
-      <p><strong>User:</strong> john</p>
-      <p><strong>Action:</strong> Completed walk</p>
-      <p><strong>Date:</strong> 2025-05-18</p>
+    <div id="logEntriesContainer">
+      <!-- Log entries will be dynamically inserted here -->
     </div>
 
-    <div class="log-entry">
-      <p><strong>User:</strong> sara</p>
-      <p><strong>Action:</strong> Missed checkpoint</p>
-      <p><strong>Date:</strong> 2025-05-17</p>
+    <div class="action-buttons">
+      <button class="download-btn" onclick="downloadLogs()">Download Logs</button>
+      <a href="admin-dashboard.html" class="back-btn">← Back to Dashboard</a>
     </div>
-
-    <button class="download-btn" onclick="downloadLogs()">Download Logs</button>
-    <a href="admin-dashboard.html" class="back-btn">← Back to Dashboard</a>
   </div>
 
+  <script src="../scripts/data.js"></script>
+  <script src="../scripts/app.js"></script>
   <script>
+    let currentAdminUser = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof initializeData === 'function') initializeData();
+      
+      currentAdminUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+
+      if (!currentAdminUser || currentAdminUser.role !== 'admin') {
+        alert("Access Denied. You must be an admin to view logs.");
+        // Redirect or disable functionality
+        document.getElementById('logEntriesContainer').innerHTML = "<p>Access Denied. Please log in as an admin.</p>";
+        document.querySelector('.download-btn').disabled = true;
+        return;
+      }
+      document.getElementById('adminWelcomeMessage').textContent = `Logged in as: Admin ${currentAdminUser.username}`;
+      renderLogs();
+    });
+
+    function renderLogs() {
+      const logEntriesContainer = document.getElementById('logEntriesContainer');
+      logEntriesContainer.innerHTML = ''; // Clear static or old entries
+
+      const logs = getLogs(); // From data.js
+      if (!logs || logs.length === 0) {
+        logEntriesContainer.innerHTML = '<p>No logs found.</p>';
+        return;
+      }
+
+      // Sort logs by timestamp, newest first
+      logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      logs.forEach(log => {
+        const logDiv = document.createElement('div');
+        logDiv.className = 'log-entry';
+
+        let detailsString = log.details;
+        if (typeof log.details === 'object') {
+          try {
+            detailsString = JSON.stringify(log.details);
+          } catch (e) {
+            detailsString = 'Error stringifying details object.';
+            console.error("Error stringifying log details:", e, log.details);
+          }
+        }
+        
+        logDiv.innerHTML = `
+          <p><strong>Timestamp:</strong> ${new Date(log.timestamp).toLocaleString()}</p>
+          <p><strong>User ID:</strong> ${log.userId || 'N/A'}</p>
+          <p><strong>Action:</strong> ${log.action || 'N/A'}</p>
+          <p><strong>Details:</strong> ${detailsString || 'N/A'}</p>
+        `;
+        logEntriesContainer.appendChild(logDiv);
+      });
+    }
+
     function downloadLogs() {
-      const content = "User: john, Action: Completed walk, Date: 2025-05-18\nUser: sara, Action: Missed checkpoint, Date: 2025-05-17";
-      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      const logs = getLogs();
+      if (!logs || logs.length === 0) {
+        alert('No logs to download.');
+        return;
+      }
+
+      // Sort logs by timestamp, oldest first for file readability
+      logs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+      let formattedLogString = "Timestamp,User ID,Action,Details\n"; // CSV Header
+
+      logs.forEach(log => {
+        let detailsString = log.details;
+        if (typeof log.details === 'object') {
+          try {
+            // For CSV, need to ensure the stringified JSON doesn't break CSV structure (e.g. by escaping quotes)
+            detailsString = JSON.stringify(log.details).replace(/"/g, '""'); 
+          } catch (e) {
+            detailsString = 'Error stringifying details';
+          }
+        }
+        // Escape commas and quotes in other fields if they might appear, for robust CSV
+        const timestamp = `"${new Date(log.timestamp).toLocaleString()}"`;
+        const userId = `"${log.userId || ''}"`;
+        const action = `"${log.action || ''}"`;
+        detailsString = `"${detailsString || ''}"`; // Ensure details string is also quoted
+
+        formattedLogString += `${timestamp},${userId},${action},${detailsString}\n`;
+      });
+
+      const blob = new Blob([formattedLogString], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "walk-logs.txt";
-      link.click();
+      
+      if (link.download !== undefined) { // Feature detection
+        const url = URL.createObjectURL(blob);
+        const date = new Date();
+        const filename = `secure_walkways_logs_${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}_${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}.csv`;
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url); // Clean up
+      } else {
+        alert("Your browser does not support direct file download. Please try a different browser.");
+      }
     }
   </script>
 </body>

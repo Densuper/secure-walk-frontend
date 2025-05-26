@@ -45,24 +45,57 @@
 </head>
 <body>
   <h2>Admin Login</h2>
-  <input type="text" placeholder="Admin Username" id="adminUser">
-  <input type="password" placeholder="Password" id="adminPass">
-  <button onclick="adminLogin()">Login</button>
+  <form id="adminLoginForm">
+    <input type="text" placeholder="Admin Username" id="adminUser" required>
+    <input type="password" placeholder="Password" id="adminPass" required>
+    <button type="submit">Login</button>
+  </form>
+  <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
 
+  <script src="../scripts/data.js"></script>
+  <script src="../scripts/app.js"></script>
   <script>
-    function adminLogin() {
-      const user = document.getElementById('adminUser').value;
-      const pass = document.getElementById('adminPass').value;
+    document.getElementById('adminLoginForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent actual form submission
 
-      // Temporary dummy check (replace with backend auth later)
-      if (user === "admin" && pass === "admin") {
-        alert("Admin login successful!");
-        // Redirect to admin dashboard (create this later)
-        location.href = "admin-dashboard.html";
-      } else {
-        alert("Invalid admin credentials");
+      const usernameInput = document.getElementById('adminUser');
+      const passwordInput = document.getElementById('adminPass');
+      const errorMessageDiv = document.getElementById('errorMessage');
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value; // Get password as is
+
+      // Clear previous error messages
+      errorMessageDiv.textContent = '';
+
+      if (!username || !password) {
+        errorMessageDiv.textContent = 'Please enter both username and password.';
+        return;
       }
-    }
+
+      // Call loginUser from app.js
+      // Assuming data.js calls initializeData() on load.
+      const loginResult = loginUser(username, password);
+
+      if (loginResult && loginResult.success) {
+        if (loginResult.role === 'admin') {
+          // Call logEvent from app.js
+          logEvent(username, 'ADMIN_LOGIN_SUCCESS', 'Admin user logged in successfully.');
+          // Redirect to admin dashboard
+          window.location.href = 'admin-dashboard.html';
+        } else {
+          // User has a role, but it's not 'admin'
+          logEvent(username, 'ADMIN_LOGIN_FAIL', 'Attempted admin login with non-admin role: ' + loginResult.role);
+          errorMessageDiv.textContent = 'Access denied. You do not have admin privileges.';
+          // Clear current user from local storage as loginUser might have set it
+          localStorage.removeItem('currentUser');
+        }
+      } else {
+        // loginResult.success is false
+        logEvent(username, 'ADMIN_LOGIN_FAIL', loginResult.message || 'Invalid username or password.');
+        errorMessageDiv.textContent = loginResult.message || 'Login failed. Please check your credentials.';
+      }
+    });
   </script>
 </body>
 </html>

@@ -45,24 +45,58 @@
 </head>
 <body>
   <h2>User Login</h2>
-  <input type="text" placeholder="Username" id="username">
-  <input type="password" placeholder="Password" id="password">
-  <button onclick="login()">Login</button>
+  <form id="userLoginForm">
+    <input type="text" placeholder="Username" id="username" required>
+    <input type="password" placeholder="Password" id="password" required>
+    <button type="submit">Login</button>
+  </form>
+  <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
 
+  <script src="../scripts/data.js"></script>
+  <script src="../scripts/app.js"></script>
   <script>
-    function login() {
-      const user = document.getElementById('username').value;
-      const pass = document.getElementById('password').value;
+    document.getElementById('userLoginForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent actual form submission
 
-      // Temporary dummy check (replace with backend auth later)
-      if (user === "user" && pass === "1234") {
-        alert("Login successful!");
-        // Redirect to dashboard (you'll create this next)
-        location.href = "user-dashboard.html";
-      } else {
-        alert("Invalid credentials");
+      const usernameInput = document.getElementById('username');
+      const passwordInput = document.getElementById('password');
+      const errorMessageDiv = document.getElementById('errorMessage');
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value; // Get password as is
+
+      // Clear previous error messages
+      errorMessageDiv.textContent = '';
+
+      if (!username || !password) {
+        errorMessageDiv.textContent = 'Please enter both username and password.';
+        return;
       }
-    }
+
+      // Call loginUser from app.js
+      // Ensure initializeData() has been called if data.js doesn't call it itself.
+      // Assuming data.js calls initializeData() on load.
+      const loginResult = loginUser(username, password);
+
+      if (loginResult && loginResult.success) {
+        if (loginResult.role === 'user') {
+          // Call logEvent from app.js
+          logEvent(username, 'USER_LOGIN_SUCCESS', 'User logged in successfully.');
+          // Redirect to user dashboard
+          window.location.href = 'user-dashboard.html';
+        } else {
+          // User has a role, but it's not 'user' (e.g., 'admin' trying to use user login)
+          logEvent(username, 'USER_LOGIN_FAIL', 'Attempted login with non-user role: ' + loginResult.role);
+          errorMessageDiv.textContent = 'Access denied. Please use the appropriate login page.';
+          // Clear current user from local storage if set by loginUser
+          localStorage.removeItem('currentUser');
+        }
+      } else {
+        // loginResult.success is false
+        logEvent(username, 'USER_LOGIN_FAIL', loginResult.message || 'Invalid username or password.');
+        errorMessageDiv.textContent = loginResult.message || 'Login failed. Please check your credentials.';
+      }
+    });
   </script>
 </body>
 </html>
