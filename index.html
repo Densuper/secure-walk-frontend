@@ -4,12 +4,13 @@
   <meta charset="UTF-8">
   <title>Secure Walkways</title>
   <style>
+    /* Base styles */
     body {
       font-family: Arial, sans-serif;
-      background: #1f1f1f;
-      color: white;
       text-align: center;
       padding-top: 100px;
+      margin: 0; /* Added to ensure no default margin */
+      transition: background-color 0.3s, color 0.3s;
     }
     h1 {
       font-size: 36px;
@@ -21,20 +22,50 @@
       padding: 15px;
       margin: 20px auto;
       font-size: 18px;
-      background: #0077ff;
       border: none;
       border-radius: 8px;
-      color: white;
       cursor: pointer;
+      transition: background-color 0.2s;
     }
-    .login-button:hover {
-      background: #005dcc;
+
+    /* Dark Mode (current default) */
+    body.dark-mode {
+      background-color: #1f1f1f;
+      color: white;
+    }
+    .dark-mode h1 {
+      /* color: white; /* Already inherited */
+    }
+    .dark-mode .login-button {
+      background-color: #0077ff;
+      color: white;
+    }
+    .dark-mode .login-button:hover {
+      background-color: #005dcc;
+    }
+
+    /* Light Mode */
+    body.light-mode {
+      background-color: #f0f2f5; /* Light grey background */
+      color: #333; /* Dark text */
+    }
+    .light-mode h1 {
+      color: #333;
+    }
+    .light-mode .login-button {
+      background-color: #007bff; /* Standard blue */
+      color: white;
+    }
+    .light-mode .login-button:hover {
+      background-color: #0056b3; /* Darker blue */
     }
   </style>
 </head>
 <body>
   <h1>Secure Walkways</h1>
-  <button class="login-button" onclick="location.href='user-login.html'">User Login</button>
-  <button class="login-button" onclick="location.href='admin-login.html'">Admin Login</button>
+  <button class="login-button" onclick="location.href='pages/user-login.html'">User Login</button>
+  <button class="login-button" onclick="location.href='pages/admin-login.html'">Admin Login</button>
+
+  <script src="scripts/theme.js" defer></script>
 </body>
 </html>

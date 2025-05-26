@@ -4,65 +4,151 @@
   <meta charset="UTF-8">
   <title>User Login - Secure Walkways</title>
   <style>
+    /* Base styles */
     body {
       font-family: Arial, sans-serif;
-      background: #121212;
-      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       margin: 0;
+      transition: background-color 0.3s, color 0.3s;
     }
     h2 {
       margin-bottom: 30px;
     }
-    input {
+    input[type="text"], input[type="password"] { /* More specific selector */
       padding: 12px;
       margin: 10px 0;
       width: 80%;
       max-width: 300px;
       border-radius: 8px;
-      border: none;
+      box-sizing: border-box; /* Ensure padding doesn't add to width */
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
-    button {
+    button[type="submit"] { /* More specific selector */
       padding: 12px;
       width: 80%;
       max-width: 300px;
-      background-color: #0077ff;
-      color: white;
       font-size: 16px;
-      border: none;
       border-radius: 8px;
       cursor: pointer;
       margin-top: 20px;
+      border: none; /* Keep borderless for this design */
+      transition: background-color 0.2s;
     }
-    button:hover {
+    #errorMessage {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    /* Dark Mode (current default) */
+    body.dark-mode {
+      background-color: #121212;
+      color: #fff;
+    }
+    .dark-mode h2 {
+      color: #fff; /* Explicitly set, though inherited */
+    }
+    .dark-mode input[type="text"], 
+    .dark-mode input[type="password"] {
+      background-color: #2c2c2c; /* Dark input background */
+      color: #fff; /* Light text in input */
+      border: 1px solid #444; /* Subtle border for dark mode */
+    }
+    .dark-mode input[type="text"]::placeholder, 
+    .dark-mode input[type="password"]::placeholder {
+        color: #aaa; /* Lighter placeholder text for dark mode */
+    }
+    .dark-mode button[type="submit"] {
+      background-color: #0077ff;
+      color: white;
+    }
+    .dark-mode button[type="submit"]:hover {
       background-color: #005dcc;
+    }
+    .dark-mode #errorMessage {
+      color: #ff4d4d; /* Lighter red for dark background */
+    }
+
+    /* Light Mode */
+    body.light-mode {
+      background-color: #f0f2f5; /* Light grey background */
+      color: #333; /* Dark text */
+    }
+    .light-mode h2 {
+      color: #333;
+    }
+    .light-mode input[type="text"], 
+    .light-mode input[type="password"] {
+      background-color: #fff; /* White input background */
+      color: #333; /* Dark text in input */
+      border: 1px solid #ccc; /* Standard border for light mode */
+    }
+    .light-mode input[type="text"]::placeholder, 
+    .light-mode input[type="password"]::placeholder {
+        color: #666; /* Darker placeholder text for light mode */
+    }
+    .light-mode button[type="submit"] {
+      background-color: #007bff; /* Standard blue */
+      color: white;
+    }
+    .light-mode button[type="submit"]:hover {
+      background-color: #0056b3; /* Darker blue */
+    }
+    .light-mode #errorMessage {
+      color: #d93025; /* Standard red for light background */
     }
   </style>
 </head>
 <body>
   <h2>User Login</h2>
-  <input type="text" placeholder="Username" id="username">
-  <input type="password" placeholder="Password" id="password">
-  <button onclick="login()">Login</button>
+  <form id="userLoginForm">
+    <input type="text" placeholder="Username" id="username" required>
+    <input type="password" placeholder="Password" id="password" required>
+    <button type="submit">Login</button>
+  </form>
+  <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
 
+  <script src="../scripts/data.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script src="../scripts/theme.js" defer></script>
   <script>
-    function login() {
-      const user = document.getElementById('username').value;
-      const pass = document.getElementById('password').value;
+    document.getElementById('userLoginForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent actual form submission
 
-      // Temporary dummy check (replace with backend auth later)
-      if (user === "user" && pass === "1234") {
-        alert("Login successful!");
-        // Redirect to dashboard (you'll create this next)
-        location.href = "user-dashboard.html";
-      } else {
-        alert("Invalid credentials");
+      const usernameInput = document.getElementById('username');
+      const passwordInput = document.getElementById('password');
+      const errorMessageDiv = document.getElementById('errorMessage');
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value; // Get password as is
+
+      // Clear previous error messages
+      errorMessageDiv.textContent = '';
+
+      if (!username || !password) {
+        errorMessageDiv.textContent = 'Please enter both username and password.';
+        return;
       }
-    }
+
+      // Call loginUser from app.js, now with expectedRole
+      const loginResult = loginUser(username, password, 'user');
+
+      if (loginResult && loginResult.success) {
+        // Role check is now handled by loginUser if expectedRole is passed.
+        // So, if success is true, the role must be 'user'.
+        logEvent(username, 'USER_LOGIN_SUCCESS', 'User logged in successfully.');
+        window.location.href = 'user-dashboard.html';
+      } else {
+        // loginResult.success is false, message will be from loginUser
+        // This message can be 'Invalid username or password.' OR the role mismatch message.
+        logEvent(username, 'USER_LOGIN_FAIL', loginResult.message || 'User login failed.');
+        errorMessageDiv.textContent = loginResult.message || 'Login failed. Please check your credentials.';
+        // No need to manually remove 'currentUser' here, loginUser handles it.
+      }
+    });
   </script>
 </body>
 </html>
