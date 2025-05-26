@@ -1,25 +1,3 @@
-Captain Denver, your **`user-login.html`** file is stuck in a Git **merge conflict**, where two branches offer different login methods:
-
----
-
-### ⚔️ Conflict Summary
-
-| Branch                           | Method               | Logic                                           |
-| -------------------------------- | -------------------- | ----------------------------------------------- |
-| `feature/full-app-functionality` | Form-based submit    | Uses `loginUser()` from `app.js`, works offline |
-| `master`                         | Button + async/await | Uses `fetch('/api/login')`, needs backend/API   |
-
----
-
-### ✅ Recommended: Use `feature/full-app-functionality`
-
-Because your **Secure Walkways** app is designed for **local/offline use** and uses `data.js` + `app.js` for session storage and role validation.
-
----
-
-### ✅ Here is the **final conflict-free version** (safe to paste):
-
-```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -133,11 +111,10 @@ Because your **Secure Walkways** app is designed for **local/offline use** and u
 
   <div id="errorMessage"></div>
 
-  <script src="../scripts/data.js"></script>
   <script src="../scripts/app.js"></script>
   <script src="../scripts/theme.js" defer></script>
   <script>
-    document.getElementById('userLoginForm').addEventListener('submit', function(event) {
+    document.getElementById('userLoginForm').addEventListener('submit', async function(event) {
       event.preventDefault();
 
       const username = document.getElementById('username').value.trim();
@@ -150,29 +127,37 @@ Because your **Secure Walkways** app is designed for **local/offline use** and u
         return;
       }
 
-      const loginResult = loginUser(username, password);
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
 
-      if (loginResult && loginResult.success) {
-        if (loginResult.role === 'user') {
-          logEvent(username, 'USER_LOGIN_SUCCESS', 'User logged in successfully.');
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('userAuthToken', data.token);
+          if (typeof logEvent === 'function') {
+            logEvent(username, 'USER_LOGIN_SUCCESS', 'User logged in successfully via API.');
+          }
           window.location.href = 'user-dashboard.html';
         } else {
-          logEvent(username, 'USER_LOGIN_FAIL', 'Attempted login with non-user role: ' + loginResult.role);
-          errorMessageDiv.textContent = 'Access denied. Please use the correct login page.';
-          localStorage.removeItem('currentUser');
+          if (typeof logEvent === 'function') {
+            logEvent(username, 'USER_LOGIN_FAIL', 'API login failed: ' + (data.message || 'Unknown error'));
+          }
+          errorMessageDiv.textContent = data.message || 'Login failed. Please check your credentials.';
         }
-      } else {
-        logEvent(username, 'USER_LOGIN_FAIL', loginResult.message || 'Invalid credentials.');
-        errorMessageDiv.textContent = loginResult.message || 'Login failed. Please check your credentials.';
+      } catch (error) {
+        console.error('Login request failed:', error);
+        if (typeof logEvent === 'function') {
+          logEvent(username, 'USER_LOGIN_FAIL', 'API login failed: Network error or server unavailable.');
+        }
+        errorMessageDiv.textContent = 'Login request failed. Please check your network connection or try again later.';
       }
     });
   </script>
 </body>
 </html>
-```
-
----
-
-✅ Paste this into `user-login.html`, then commit the resolved file.
-
-Let me know if you want a **merged version** that supports **both offline and online logins** depending on a toggle.
