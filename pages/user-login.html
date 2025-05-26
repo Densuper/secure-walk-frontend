@@ -1,3 +1,25 @@
+Captain Denver, your **`user-login.html`** file is stuck in a Git **merge conflict**, where two branches offer different login methods:
+
+---
+
+### ⚔️ Conflict Summary
+
+| Branch                           | Method               | Logic                                           |
+| -------------------------------- | -------------------- | ----------------------------------------------- |
+| `feature/full-app-functionality` | Form-based submit    | Uses `loginUser()` from `app.js`, works offline |
+| `master`                         | Button + async/await | Uses `fetch('/api/login')`, needs backend/API   |
+
+---
+
+### ✅ Recommended: Use `feature/full-app-functionality`
+
+Because your **Secure Walkways** app is designed for **local/offline use** and uses `data.js` + `app.js` for session storage and role validation.
+
+---
+
+### ✅ Here is the **final conflict-free version** (safe to paste):
+
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -18,16 +40,16 @@
     h2 {
       margin-bottom: 30px;
     }
-    input[type="text"], input[type="password"] { /* More specific selector */
+    input[type="text"], input[type="password"] {
       padding: 12px;
       margin: 10px 0;
       width: 80%;
       max-width: 300px;
       border-radius: 8px;
-      box-sizing: border-box; /* Ensure padding doesn't add to width */
+      box-sizing: border-box;
       transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
-    button[type="submit"] { /* More specific selector */
+    button[type="submit"] {
       padding: 12px;
       width: 80%;
       max-width: 300px;
@@ -35,7 +57,7 @@
       border-radius: 8px;
       cursor: pointer;
       margin-top: 20px;
-      border: none; /* Keep borderless for this design */
+      border: none;
       transition: background-color 0.2s;
     }
     #errorMessage {
@@ -43,23 +65,22 @@
       font-weight: bold;
     }
 
-    /* Dark Mode (current default) */
+    /* Dark Mode */
     body.dark-mode {
       background-color: #121212;
       color: #fff;
     }
     .dark-mode h2 {
-      color: #fff; /* Explicitly set, though inherited */
+      color: #fff;
     }
     .dark-mode input[type="text"], 
     .dark-mode input[type="password"] {
-      background-color: #2c2c2c; /* Dark input background */
-      color: #fff; /* Light text in input */
-      border: 1px solid #444; /* Subtle border for dark mode */
+      background-color: #2c2c2c;
+      color: #fff;
+      border: 1px solid #444;
     }
-    .dark-mode input[type="text"]::placeholder, 
-    .dark-mode input[type="password"]::placeholder {
-        color: #aaa; /* Lighter placeholder text for dark mode */
+    .dark-mode input::placeholder {
+      color: #aaa;
     }
     .dark-mode button[type="submit"] {
       background-color: #0077ff;
@@ -69,63 +90,59 @@
       background-color: #005dcc;
     }
     .dark-mode #errorMessage {
-      color: #ff4d4d; /* Lighter red for dark background */
+      color: #ff4d4d;
     }
 
     /* Light Mode */
     body.light-mode {
-      background-color: #f0f2f5; /* Light grey background */
-      color: #333; /* Dark text */
+      background-color: #f0f2f5;
+      color: #333;
     }
     .light-mode h2 {
       color: #333;
     }
     .light-mode input[type="text"], 
     .light-mode input[type="password"] {
-      background-color: #fff; /* White input background */
-      color: #333; /* Dark text in input */
-      border: 1px solid #ccc; /* Standard border for light mode */
+      background-color: #fff;
+      color: #333;
+      border: 1px solid #ccc;
     }
-    .light-mode input[type="text"]::placeholder, 
-    .light-mode input[type="password"]::placeholder {
-        color: #666; /* Darker placeholder text for light mode */
+    .light-mode input::placeholder {
+      color: #666;
     }
     .light-mode button[type="submit"] {
-      background-color: #007bff; /* Standard blue */
+      background-color: #007bff;
       color: white;
     }
     .light-mode button[type="submit"]:hover {
-      background-color: #0056b3; /* Darker blue */
+      background-color: #0056b3;
     }
     .light-mode #errorMessage {
-      color: #d93025; /* Standard red for light background */
+      color: #d93025;
     }
   </style>
 </head>
 <body>
   <h2>User Login</h2>
+
   <form id="userLoginForm">
     <input type="text" placeholder="Username" id="username" required>
     <input type="password" placeholder="Password" id="password" required>
     <button type="submit">Login</button>
   </form>
-  <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
+
+  <div id="errorMessage"></div>
 
   <script src="../scripts/data.js"></script>
   <script src="../scripts/app.js"></script>
   <script src="../scripts/theme.js" defer></script>
   <script>
     document.getElementById('userLoginForm').addEventListener('submit', function(event) {
-      event.preventDefault(); // Prevent actual form submission
+      event.preventDefault();
 
-      const usernameInput = document.getElementById('username');
-      const passwordInput = document.getElementById('password');
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
       const errorMessageDiv = document.getElementById('errorMessage');
-
-      const username = usernameInput.value.trim();
-      const password = passwordInput.value; // Get password as is
-
-      // Clear previous error messages
       errorMessageDiv.textContent = '';
 
       if (!username || !password) {
@@ -133,30 +150,29 @@
         return;
       }
 
-      // Call loginUser from app.js
-      // Ensure initializeData() has been called if data.js doesn't call it itself.
-      // Assuming data.js calls initializeData() on load.
       const loginResult = loginUser(username, password);
 
       if (loginResult && loginResult.success) {
         if (loginResult.role === 'user') {
-          // Call logEvent from app.js
           logEvent(username, 'USER_LOGIN_SUCCESS', 'User logged in successfully.');
-          // Redirect to user dashboard
           window.location.href = 'user-dashboard.html';
         } else {
-          // User has a role, but it's not 'user' (e.g., 'admin' trying to use user login)
           logEvent(username, 'USER_LOGIN_FAIL', 'Attempted login with non-user role: ' + loginResult.role);
-          errorMessageDiv.textContent = 'Access denied. Please use the appropriate login page.';
-          // Clear current user from local storage if set by loginUser
+          errorMessageDiv.textContent = 'Access denied. Please use the correct login page.';
           localStorage.removeItem('currentUser');
         }
       } else {
-        // loginResult.success is false
-        logEvent(username, 'USER_LOGIN_FAIL', loginResult.message || 'Invalid username or password.');
+        logEvent(username, 'USER_LOGIN_FAIL', loginResult.message || 'Invalid credentials.');
         errorMessageDiv.textContent = loginResult.message || 'Login failed. Please check your credentials.';
       }
     });
   </script>
 </body>
 </html>
+```
+
+---
+
+✅ Paste this into `user-login.html`, then commit the resolved file.
+
+Let me know if you want a **merged version** that supports **both offline and online logins** depending on a toggle.

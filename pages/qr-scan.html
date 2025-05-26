@@ -14,7 +14,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh; /* Ensure body takes full height */
+      min-height: 100vh;
       transition: background-color 0.3s, color 0.3s;
     }
     h1 {
@@ -29,7 +29,11 @@
       margin-bottom: 20px;
       transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
     }
-    #reader video { width: 100% !important; height: auto !important; display: block; } /* Ensure video is block */
+    #reader video {
+      width: 100% !important;
+      height: auto !important;
+      display: block;
+    }
     #scanResult {
       margin-top: 20px;
       padding: 10px;
@@ -39,14 +43,14 @@
       width: 100%;
       max-width: 400px;
       box-sizing: border-box;
-      text-align: center; /* Center text in result box */
+      text-align: center;
       transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
     .btn-back {
       margin-top: 30px;
       padding: 12px 25px;
       font-size: 1em;
-      font-weight: bold; /* Added for consistency */
+      font-weight: bold;
       border: none;
       border-radius: 6px;
       cursor: pointer;
@@ -54,24 +58,24 @@
       transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    /* Dark Mode (current default) */
+    /* Dark Mode */
     body.dark-mode { background-color: #1a1a1a; color: #e0e0e0; }
     .dark-mode h1 { color: #00acc1; }
     .dark-mode #reader { background-color: #2c2c2c; border: 1px solid #444; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
     .dark-mode .scan-success { color: #38c172; background-color: #203d2b; border: 1px solid #38c172; }
-    .dark-mode .scan-error   { color: #e74c3c; background-color: #4a2526; border: 1px solid #e74c3c; }
-    .dark-mode .scan-info    { color: #79c0d8; background-color: #253946; border: 1px solid #79c0d8; }
+    .dark-mode .scan-error { color: #e74c3c; background-color: #4a2526; border: 1px solid #e74c3c; }
+    .dark-mode .scan-info { color: #79c0d8; background-color: #253946; border: 1px solid #79c0d8; }
     .dark-mode .btn-back { background-color: #007bff; color: white; }
     .dark-mode .btn-back:hover { background-color: #0056b3; }
 
     /* Light Mode */
     body.light-mode { background-color: #f0f2f5; color: #333; }
-    .light-mode h1 { color: #007bff; } /* Standard blue for light mode */
+    .light-mode h1 { color: #007bff; }
     .light-mode #reader { background-color: #e9ecef; border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     .light-mode .scan-success { color: #1e7e34; background-color: #d4edda; border: 1px solid #c3e6cb; }
-    .light-mode .scan-error   { color: #c82333; background-color: #f8d7da; border: 1px solid #f5c6cb; }
-    .light-mode .scan-info    { color: #004085; background-color: #cce5ff; border: 1px solid #b8daff; }
-    .light-mode .btn-back { background-color: #6c757d; color: white; } /* Grey for light mode */
+    .light-mode .scan-error { color: #c82333; background-color: #f8d7da; border: 1px solid #f5c6cb; }
+    .light-mode .scan-info { color: #004085; background-color: #cce5ff; border: 1px solid #b8daff; }
+    .light-mode .btn-back { background-color: #6c757d; color: white; }
     .light-mode .btn-back:hover { background-color: #5a6268; }
   </style>
 </head>
@@ -90,7 +94,7 @@
   <script>
     let currentUser = null;
     let activeWalk = null;
-    let html5QrCode = null; // Keep instance for potential stop/clear
+    let html5QrCode = null;
 
     function goBack() {
       if (html5QrCode && html5QrCode.isScanning) {
@@ -148,8 +152,6 @@
         return;
       }
 
-      // Call updateCheckpointStatus from app.js
-      // The third parameter `status` is handled by updateCheckpointStatus itself, it expects timestamp
       const scanTime = new Date().toISOString();
       const updateResult = updateCheckpointStatus(activeWalk.id, decodedText, scanTime);
 
@@ -163,36 +165,27 @@
         if (updateResult.walkCompleted) {
           scanResultDiv.textContent += " Walk complete! All checkpoints scanned. Redirecting to dashboard...";
           if (html5QrCode && html5QrCode.isScanning) {
-             html5QrCode.stop().then(() => {
-                console.log("Scanner stopped due to walk completion.");
-             }).catch(err => console.error("Error stopping scanner after walk completion:", err));
+            html5QrCode.stop().then(() => {
+              console.log("Scanner stopped due to walk completion.");
+            }).catch(err => console.error("Error stopping scanner after walk completion:", err));
           }
           setTimeout(() => {
             window.location.href = "user-dashboard.html";
-          }, 3000); // Redirect after 3 seconds
+          }, 3000);
         }
       } else {
-        // Handle specific known non-success cases like 'alreadyScanned' differently if needed
         if (updateResult && updateResult.alreadyScanned) {
-             scanResultDiv.textContent = updateResult.message || `Checkpoint already scanned: ${decodedText}`;
-             scanResultDiv.className = 'scan-info'; // Use info for already scanned
+          scanResultDiv.textContent = updateResult.message || `Checkpoint already scanned: ${decodedText}`;
+          scanResultDiv.className = 'scan-info';
         } else {
-            scanResultDiv.textContent = "Error: " + (updateResult.message || `Invalid QR Code (${decodedText}) for this patrol.`);
-            scanResultDiv.className = 'scan-error';
+          scanResultDiv.textContent = "Error: " + (updateResult.message || `Invalid QR Code (${decodedText}) for this patrol.`);
+          scanResultDiv.className = 'scan-error';
         }
       }
     }
 
     function onScanFailure(error) {
-      // This function is called frequently by the scanner library when no QR code is found in the frame.
-      // It's usually not an actual error, so we don't want to spam the user.
-      // console.warn(`QR scan failure: ${error}`);
-      // Optionally, display a subtle message or do nothing.
-      // const scanResultDiv = document.getElementById('scanResult');
-      // if (scanResultDiv.textContent.startsWith("Scanner ready")) { // Only if no other message is up
-      //   scanResultDiv.textContent = "Scanning for QR code...";
-      //   scanResultDiv.className = 'scan-info';
-      // }
+      // Silent on frame misses
     }
   </script>
 </body>

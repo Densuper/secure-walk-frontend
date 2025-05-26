@@ -27,7 +27,7 @@
       box-sizing: border-box;
       transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
-    button[type="submit"] {
+    button[type="submit"], button {
       padding: 12px;
       width: 80%;
       max-width: 300px;
@@ -43,7 +43,7 @@
       font-weight: bold;
     }
 
-    /* Dark Mode (current default) */
+    /* Dark Mode */
     body.dark-mode {
       background-color: #181818;
       color: #fff;
@@ -57,19 +57,18 @@
       color: #fff;
       border: 1px solid #444;
     }
-    .dark-mode input[type="text"]::placeholder, 
-    .dark-mode input[type="password"]::placeholder {
-        color: #aaa;
+    .dark-mode input::placeholder {
+      color: #aaa;
     }
-    .dark-mode button[type="submit"] {
-      background-color: #ff4d4d; /* Red theme for admin login */
+    .dark-mode button {
+      background-color: #ff4d4d;
       color: white;
     }
-    .dark-mode button[type="submit"]:hover {
-      background-color: #cc0000; /* Darker red */
+    .dark-mode button:hover {
+      background-color: #cc0000;
     }
     .dark-mode #errorMessage {
-      color: #ff7070; /* Lighter red for dark background */
+      color: #ff7070;
     }
 
     /* Light Mode */
@@ -86,76 +85,67 @@
       color: #333;
       border: 1px solid #ccc;
     }
-    .light-mode input[type="text"]::placeholder, 
-    .light-mode input[type="password"]::placeholder {
-        color: #666;
+    .light-mode input::placeholder {
+      color: #666;
     }
-    .light-mode button[type="submit"] {
-      background-color: #dc3545; /* Standard red for light mode */
+    .light-mode button {
+      background-color: #dc3545;
       color: white;
     }
-    .light-mode button[type="submit"]:hover {
-      background-color: #c82333; /* Darker red */
+    .light-mode button:hover {
+      background-color: #c82333;
     }
     .light-mode #errorMessage {
-      color: #d93025; /* Standard error red */
+      color: #d93025;
     }
   </style>
 </head>
 <body>
   <h2>Admin Login</h2>
-  <form id="adminLoginForm">
-    <input type="text" placeholder="Admin Username" id="adminUser" required>
-    <input type="password" placeholder="Password" id="adminPass" required>
-    <button type="submit">Login</button>
-  </form>
+
+  <input type="text" placeholder="Admin Username" id="adminUser">
+  <input type="password" placeholder="Password" id="adminPass">
+  <button onclick="adminLogin()">Login</button>
+
   <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
 
   <script src="../scripts/data.js"></script>
   <script src="../scripts/app.js"></script>
   <script src="../scripts/theme.js" defer></script>
   <script>
-    document.getElementById('adminLoginForm').addEventListener('submit', function(event) {
-      event.preventDefault(); // Prevent actual form submission
-
-      const usernameInput = document.getElementById('adminUser');
-      const passwordInput = document.getElementById('adminPass');
-      const errorMessageDiv = document.getElementById('errorMessage');
-
-      const username = usernameInput.value.trim();
-      const password = passwordInput.value; // Get password as is
-
-      // Clear previous error messages
-      errorMessageDiv.textContent = '';
+    async function adminLogin() {
+      const username = document.getElementById('adminUser').value;
+      const password = document.getElementById('adminPass').value;
+      const errorMessageElement = document.getElementById("errorMessage");
+      errorMessageElement.textContent = '';
 
       if (!username || !password) {
-        errorMessageDiv.textContent = 'Please enter both username and password.';
+        errorMessageElement.textContent = "Please enter both username and password.";
         return;
       }
 
-      // Call loginUser from app.js
-      // Assuming data.js calls initializeData() on load.
-      const loginResult = loginUser(username, password);
+      try {
+        const response = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
 
-      if (loginResult && loginResult.success) {
-        if (loginResult.role === 'admin') {
-          // Call logEvent from app.js
-          logEvent(username, 'ADMIN_LOGIN_SUCCESS', 'Admin user logged in successfully.');
-          // Redirect to admin dashboard
-          window.location.href = 'admin-dashboard.html';
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('adminAuthToken', data.token);
+          window.location.href = "admin-dashboard.html";
         } else {
-          // User has a role, but it's not 'admin'
-          logEvent(username, 'ADMIN_LOGIN_FAIL', 'Attempted admin login with non-admin role: ' + loginResult.role);
-          errorMessageDiv.textContent = 'Access denied. You do not have admin privileges.';
-          // Clear current user from local storage as loginUser might have set it
-          localStorage.removeItem('currentUser');
+          errorMessageElement.textContent = data.message || 'Admin login failed. Please try again.';
         }
-      } else {
-        // loginResult.success is false
-        logEvent(username, 'ADMIN_LOGIN_FAIL', loginResult.message || 'Invalid username or password.');
-        errorMessageDiv.textContent = loginResult.message || 'Login failed. Please check your credentials.';
+      } catch (error) {
+        console.error('Admin login error:', error);
+        errorMessageElement.textContent = 'An error occurred during admin login. Please try again later.';
       }
-    });
+    }
   </script>
 </body>
 </html>
