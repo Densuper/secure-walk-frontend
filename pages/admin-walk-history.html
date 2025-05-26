@@ -5,78 +5,155 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Walk History</title>
   <style>
+    /* Base styles */
     body {
-      font-family: sans-serif;
-      background: #f5f5f5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
     }
-
     .container {
-      max-width: 700px;
+      max-width: 900px;
       margin: auto;
+      padding: 25px;
+      border-radius: 10px;
+      transition: background-color 0.3s, box-shadow 0.3s;
     }
-
-    h1 {
-      text-align: center;
-      color: #cc0000;
-      font-size: 26px;
-      margin-bottom: 20px;
-    }
-
+    h1 { text-align: center; font-size: 2em; margin-bottom: 10px; }
+    .admin-welcome { text-align: center; font-size: 1.1em; margin-bottom: 25px; }
     .walk-entry {
-      background: #fff;
-      padding: 15px;
-      margin-bottom: 15px;
+      padding: 18px;
+      margin-bottom: 18px;
       border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.3s, border-left-color 0.3s;
     }
-
-    .walk-entry p {
-      margin: 5px 0;
-    }
-
-    button {
-      padding: 8px 12px;
-      background: #cc0000;
-      color: white;
+    .walk-entry .info { flex: 1 1 300px; padding-right: 15px; }
+    .walk-entry p { margin: 6px 0; font-size: 0.95em; }
+    .walk-entry .action-button {
+      padding: 10px 15px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      text-decoration: none;
+      font-size: 0.9em;
+      font-weight: bold;
+      transition: background-color 0.2s ease;
+      flex-shrink: 0;
+    }
+    .back-btn-container { text-align: center; margin-top: 30px; }
+    .back-btn {
+      display: inline-block;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 10px 15px;
+      border-radius: 6px;
+      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     }
 
-    button:hover {
-      background: #990000;
-    }
+    /* Light Mode */
+    body.light-mode { background-color: #f4f7f6; color: #333; }
+    .light-mode .container { background-color: #fff; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+    .light-mode h1 { color: #333; }
+    .light-mode .admin-welcome { color: #555; }
+    .light-mode .walk-entry { background: #e9ecef; border-left: 5px solid #17a2b8; color: #333; }
+    .light-mode .walk-entry p strong { color: #0056b3; }
+    .light-mode .walk-entry .action-button { background-color: #007bff; color: white; }
+    .light-mode .walk-entry .action-button:hover { background-color: #0056b3; }
+    .light-mode .back-btn { color: #007bff; border: 1px solid #007bff; }
+    .light-mode .back-btn:hover { background-color: #007bff; color: white; }
+
+    /* Dark Mode */
+    body.dark-mode { background-color: #1e1e1e; color: #f0f0f0; }
+    .dark-mode .container { background-color: #2c2c2c; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+    .dark-mode h1 { color: #00acc1; }
+    .dark-mode .admin-welcome { color: #bbb; }
+    .dark-mode .walk-entry { background: #3a3a3a; border-left: 5px solid #008cba; color: #f0f0f0; }
+    .dark-mode .walk-entry p strong { color: #79c0d8; }
+    .dark-mode .walk-entry .action-button { background-color: #008cba; color: white; }
+    .dark-mode .walk-entry .action-button:hover { background-color: #007da5; }
+    .dark-mode .back-btn { color: #79c0d8; border: 1px solid #79c0d8; }
+    .dark-mode .back-btn:hover { background-color: #79c0d8; color: #2c2c2c; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Admin Walk History</h1>
+    <p class="admin-welcome" id="adminWelcomeMessage"></p>
 
-    <!-- Walk 1 -->
-    <div class="walk-entry">
-      <p><strong>User:</strong> john</p>
-      <p><strong>Date:</strong> 2025-05-18</p>
-      <p><strong>Time:</strong> 07:30 AM</p>
-      <p><strong>Status:</strong> Completed</p>
-      <button onclick="viewDetails('john-walk1')">View Details</button>
+    <div id="walkHistoryContainer">
+      <!-- Walk entries will be dynamically inserted here -->
     </div>
 
-    <!-- Walk 2 -->
-    <div class="walk-entry">
-      <p><strong>User:</strong> sara</p>
-      <p><strong>Date:</strong> 2025-05-17</p>
-      <p><strong>Time:</strong> 02:00 PM</p>
-      <p><strong>Status:</strong> Incomplete</p>
-      <button onclick="viewDetails('sara-walk2')">View Details</button>
+    <div class="back-btn-container">
+        <a href="admin-dashboard.html" class="back-btn">← Back to Admin Dashboard</a>
     </div>
   </div>
 
+  <script src="../scripts/data.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script src="../scripts/theme.js" defer></script>
   <script>
-    function viewDetails(walkId) {
-      // Right now, redirect to same walk-details for demo
-      window.location.href = "walk-details.html";
+    let currentAdminUser = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof initializeData === 'function') initializeData();
+      
+      currentAdminUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+
+      if (!currentAdminUser || currentAdminUser.role !== 'admin') {
+        alert("Access Denied. You must be an admin to view this page.");
+        window.location.href = 'admin-login.html';
+        return;
+      }
+      document.getElementById('adminWelcomeMessage').textContent = `Logged in as: Admin ${currentAdminUser.username}`;
+
+      renderWalkHistory();
+    });
+
+    function renderWalkHistory() {
+      const walkHistoryContainer = document.getElementById('walkHistoryContainer');
+      walkHistoryContainer.innerHTML = ''; // Clear static or old entries
+
+      const allWalks = getWalks(); // From data.js
+      const allUsers = getUsers(); // From data.js
+
+      if (allWalks.length === 0) {
+        walkHistoryContainer.innerHTML = '<p>No walk history found.</p>';
+        return;
+      }
+      
+      // Sort walks by start time, newest first
+      allWalks.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+
+      allWalks.forEach(walk => {
+        const user = allUsers.find(u => u.username === walk.userId);
+        const userName = user ? user.username : (walk.userId || 'Unknown User');
+        
+        const walkDate = new Date(walk.startTime).toLocaleDateString();
+        const walkTime = new Date(walk.startTime).toLocaleTimeString();
+
+        const walkEntryDiv = document.createElement('div');
+        walkEntryDiv.className = 'walk-entry';
+        
+        walkEntryDiv.innerHTML = `
+          <div class="info">
+            <p><strong>User:</strong> ${userName}</p>
+            <p><strong>Date:</strong> ${walkDate}</p>
+            <p><strong>Time:</strong> ${walkTime}</p>
+            <p><strong>Status:</strong> ${walk.status}</p>
+          </div>
+          <button class="action-button" onclick="navigateToWalkDetails('${walk.id}')">View Details</button>
+        `;
+        walkHistoryContainer.appendChild(walkEntryDiv);
+      });
+    }
+
+    function navigateToWalkDetails(walkId) {
+      window.location.href = `walk-details.html?walkId=${walkId}`;
     }
   </script>
 </body>

@@ -5,83 +5,341 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>User Management</title>
   <style>
+    /* Base styles */
     body {
-      font-family: sans-serif;
-      background: #f5f5f5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
     }
-
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
+      padding: 25px;
+      border-radius: 10px;
+      transition: background-color 0.3s, box-shadow 0.3s;
     }
-
-    h1 {
-      text-align: center;
-      color: #cc0000;
-    }
-
+    h1 { text-align: center; margin-bottom: 25px; }
+    .admin-welcome { text-align: center; font-size: 1.1em; margin-bottom: 20px; }
+    #userListContainer { margin-top: 20px; }
     .user-entry {
-      background: #fff;
       padding: 15px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      transition: background-color 0.3s, border-left-color 0.3s;
     }
-
-    .user-entry span {
-      font-size: 16px;
-    }
-
-    .buttons button {
-      margin-left: 5px;
-      padding: 6px 10px;
-      background: #cc0000;
-      color: white;
+    .user-entry .info { flex-grow: 1; }
+    .user-entry .actions button {
+      margin-left: 8px;
+      padding: 8px 12px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
-
-    .buttons button:hover {
-      background: #990000;
-    }
-
-    .back-btn {
+    #userFormWrapper {
+      padding: 20px;
+      border-radius: 8px;
       margin-top: 20px;
-      display: block;
-      text-align: center;
-      color: #cc0000;
-      text-decoration: none;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+    #userFormWrapper h2 { margin-top: 0; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .form-group input[type="text"],
+    .form-group input[type="password"],
+    .form-group select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+    .form-buttons button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 10px;
       font-weight: bold;
     }
+    .action-button { /* For "Add New User" */
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto 0;
+      font-weight: bold;
+    }
+    .back-btn {
+      display: inline-block;
+      margin-top: 25px;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+    /* Light Mode */
+    body.light-mode { background-color: #f4f7f6; color: #333; }
+    .light-mode .container { background-color: #fff; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+    .light-mode h1 { color: #333; }
+    .light-mode .admin-welcome { color: #555; }
+    .light-mode .user-entry { background: #e9ecef; border-left: 5px solid #007bff; color: #333; }
+    .light-mode .user-entry .info strong { color: #0056b3; }
+    .light-mode .edit-btn { background-color: #ffc107; color: #212529; }
+    .light-mode .edit-btn:hover { background-color: #e0a800; }
+    .light-mode .delete-btn { background-color: #dc3545; color: white; }
+    .light-mode .delete-btn:hover { background-color: #c82333; }
+    .light-mode #userFormWrapper { background-color: #f8f9fa; border: 1px solid #dee2e6; }
+    .light-mode #userFormWrapper h2 { color: #495057; }
+    .light-mode .form-group label { color: #333; }
+    .light-mode .form-group input[type="text"],
+    .light-mode .form-group input[type="password"],
+    .light-mode .form-group select { background-color: #fff; color: #495057; border: 1px solid #ced4da; }
+    .light-mode #saveUserButton { background-color: #28a745; color: white; }
+    .light-mode #cancelFormButton { background-color: #6c757d; color: white; }
+    .light-mode .action-button { background-color: #007bff; color: white; }
+    .light-mode .action-button:hover { background-color: #0056b3; }
+    .light-mode .back-btn { color: #007bff; border: 1px solid #007bff; }
+    .light-mode .back-btn:hover { background-color: #007bff; color: white; }
+    .light-mode #passwordHelp { color: #6c757d; }
+
+
+    /* Dark Mode */
+    body.dark-mode { background-color: #1e1e1e; color: #f0f0f0; }
+    .dark-mode .container { background-color: #2c2c2c; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+    .dark-mode h1 { color: #00acc1; } /* Cyan accent for dark mode title */
+    .dark-mode .admin-welcome { color: #bbb; }
+    .dark-mode .user-entry { background: #3a3a3a; border-left: 5px solid #008cba; color: #f0f0f0; }
+    .dark-mode .user-entry .info strong { color: #79c0d8; } /* Lighter blue for dark mode */
+    .dark-mode .edit-btn { background-color: #e0a800; color: #212529; } /* Keep button text dark for yellow */
+    .dark-mode .edit-btn:hover { background-color: #c69500; }
+    .dark-mode .delete-btn { background-color: #c82333; color: white; }
+    .dark-mode .delete-btn:hover { background-color: #a71d2a; }
+    .dark-mode #userFormWrapper { background-color: #343a40; border: 1px solid #495057; }
+    .dark-mode #userFormWrapper h2 { color: #f0f0f0; }
+    .dark-mode .form-group label { color: #f0f0f0; }
+    .dark-mode .form-group input[type="text"],
+    .dark-mode .form-group input[type="password"],
+    .dark-mode .form-group select { background-color: #495057; color: #f0f0f0; border: 1px solid #6c757d; }
+    .dark-mode #saveUserButton { background-color: #1e7e34; color: white; } /* Darker green */
+    .dark-mode #cancelFormButton { background-color: #5a6268; color: white; }
+    .dark-mode .action-button { background-color: #008cba; color: white; }
+    .dark-mode .action-button:hover { background-color: #007da5; }
+    .dark-mode .back-btn { color: #79c0d8; border: 1px solid #79c0d8; }
+    .dark-mode .back-btn:hover { background-color: #79c0d8; color: #2c2c2c; }
+    .dark-mode #passwordHelp { color: #adb5bd; }
+
   </style>
 </head>
 <body>
   <div class="container">
     <h1>User Management</h1>
+    <p class="admin-welcome" id="adminWelcomeMessage"></p>
 
-    <div class="user-entry">
-      <span><strong>Username:</strong> john</span>
-      <div class="buttons">
-        <button>Edit</button>
-        <button>Delete</button>
-      </div>
+    <div id="userListContainer">
+      <!-- Users will be dynamically inserted here -->
     </div>
 
-    <div class="user-entry">
-      <span><strong>Username:</strong> sara</span>
-      <div class="buttons">
-        <button>Edit</button>
-        <button>Delete</button>
-      </div>
+    <button id="showAddUserFormButton" class="action-button">Add New User</button>
+
+    <div id="userFormWrapper" style="display: none;">
+      <h2 id="formTitle">Add New User</h2>
+      <form id="userForm">
+        <input type="hidden" id="editModeUsername" value="">
+        <div class="form-group">
+          <label for="username">Username:</label>
+          <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password">
+          <small id="passwordHelp">Leave blank to keep current password (when editing).</small>
+        </div>
+        <div class="form-group">
+          <label for="role">Role:</label>
+          <select id="role" name="role" required>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="form-buttons">
+          <button type="submit" id="saveUserButton">Save User</button>
+          <button type="button" id="cancelFormButton">Cancel</button>
+        </div>
+      </form>
     </div>
 
-    <a href="admin-dashboard.html" class="back-btn">← Back to Dashboard</a>
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="admin-dashboard.html" class="back-btn">← Back to Admin Dashboard</a>
+    </div>
   </div>
+
+  <script src="../scripts/data.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script src="../scripts/theme.js" defer></script>
+  <script>
+    let currentAdminUser = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof initializeData === 'function') initializeData();
+      
+      currentAdminUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+
+      if (!currentAdminUser || currentAdminUser.role !== 'admin') {
+        alert("Access Denied. You must be an admin to manage users.");
+        window.location.href = 'admin-login.html';
+        return;
+      }
+      document.getElementById('adminWelcomeMessage').textContent = `Logged in as: ${currentAdminUser.username}`;
+
+      renderUserList();
+
+      document.getElementById('showAddUserFormButton').addEventListener('click', showAddForm);
+      document.getElementById('userForm').addEventListener('submit', handleUserFormSubmit);
+      document.getElementById('cancelFormButton').addEventListener('click', hideUserForm);
+      document.getElementById('userListContainer').addEventListener('click', handleUserListActions);
+    });
+
+    function renderUserList() {
+      const userListContainer = document.getElementById('userListContainer');
+      userListContainer.innerHTML = ''; // Clear existing list
+      const users = getUsers();
+
+      if (users.length === 0) {
+        userListContainer.innerHTML = '<p>No users found.</p>';
+        return;
+      }
+
+      users.forEach(user => {
+        const userDiv = document.createElement('div');
+        userDiv.className = 'user-entry';
+        userDiv.innerHTML = `
+          <div class="info">
+            <span><strong>Username:</strong> ${user.username}</span> | 
+            <span><strong>Role:</strong> ${user.role}</span>
+          </div>
+          <div class="actions">
+            <button class="edit-btn" data-username="${user.username}">Edit</button>
+            <button class="delete-btn" data-username="${user.username}">Delete</button>
+          </div>
+        `;
+        userListContainer.appendChild(userDiv);
+      });
+    }
+
+    function showAddForm() {
+      document.getElementById('formTitle').textContent = 'Add New User';
+      document.getElementById('userForm').reset();
+      document.getElementById('editModeUsername').value = '';
+      document.getElementById('username').disabled = false;
+      document.getElementById('passwordHelp').style.display = 'none'; // No password help for new user
+      document.getElementById('password').required = true; // Password required for new user
+      document.getElementById('userFormWrapper').style.display = 'block';
+    }
+
+    function showEditForm(username) {
+      const users = getUsers();
+      const userToEdit = users.find(u => u.username === username);
+      if (!userToEdit) {
+        alert('User not found for editing.');
+        return;
+      }
+
+      document.getElementById('formTitle').textContent = 'Edit User';
+      document.getElementById('userForm').reset(); // Clear previous entries
+      document.getElementById('editModeUsername').value = userToEdit.username;
+      
+      const usernameInput = document.getElementById('username');
+      usernameInput.value = userToEdit.username;
+      usernameInput.disabled = true; // Username should not be editable
+
+      document.getElementById('role').value = userToEdit.role;
+      document.getElementById('password').value = ''; // Clear password field
+      document.getElementById('password').placeholder = 'Leave blank to keep current password';
+      document.getElementById('password').required = false; // Password not required when editing (to keep old one)
+      document.getElementById('passwordHelp').style.display = 'block';
+      document.getElementById('userFormWrapper').style.display = 'block';
+    }
+
+    function hideUserForm() {
+      document.getElementById('userFormWrapper').style.display = 'none';
+      document.getElementById('userForm').reset();
+      document.getElementById('username').disabled = false; // Re-enable for next time
+    }
+
+    function handleUserFormSubmit(event) {
+      event.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value; // No trim for password
+      const role = document.getElementById('role').value;
+      const editModeUsername = document.getElementById('editModeUsername').value;
+
+      if (!username || !role) {
+        alert('Username and role are required.');
+        return;
+      }
+
+      if (editModeUsername) { // Editing existing user
+        const updatedData = { role };
+        if (password) { // Only include password if a new one is entered
+          updatedData.password = password; // Hashing should be done here if implemented
+        }
+        const result = updateUser(editModeUsername, updatedData);
+        if (result.success) {
+          logEvent(currentAdminUser.username, 'USER_UPDATED', { updatedUser: editModeUsername, changes: updatedData });
+          alert(`User '${editModeUsername}' updated successfully.`);
+        } else {
+          alert(`Error updating user: ${result.message}`);
+        }
+      } else { // Adding new user
+        if (!password) {
+          alert('Password is required for new users.');
+          return;
+        }
+        const newUser = { username, password, role }; // Hashing should be done here if implemented
+        const result = addUser(newUser);
+        if (result.success) {
+          logEvent(currentAdminUser.username, 'USER_CREATED', { createdUser: username, role: role });
+          alert(`User '${username}' added successfully.`);
+        } else {
+          alert(`Error adding user: ${result.message}`);
+        }
+      }
+      renderUserList();
+      hideUserForm();
+    }
+
+    function handleUserListActions(event) {
+      const target = event.target;
+      const username = target.dataset.username;
+
+      if (target.classList.contains('edit-btn')) {
+        showEditForm(username);
+      } else if (target.classList.contains('delete-btn')) {
+        if (username === currentAdminUser.username) {
+          alert("Error: Cannot delete the currently logged-in admin user.");
+          return;
+        }
+        if (confirm(`Are you sure you want to delete user '${username}'? This action cannot be undone.`)) {
+          const result = deleteUser(username);
+          if (result.success) {
+            logEvent(currentAdminUser.username, 'USER_DELETED', { deletedUser: username });
+            alert(`User '${username}' deleted successfully.`);
+            renderUserList();
+          } else {
+            alert(`Error deleting user: ${result.message}`);
+          }
+        }
+      }
+    }
+  </script>
 </body>
 </html>

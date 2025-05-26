@@ -5,50 +5,113 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Dashboard</title>
   <style>
+    /* Base styles */
     body {
-      font-family: sans-serif;
-      background: #f5f5f5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
     }
-
     .dashboard {
       max-width: 800px;
       margin: auto;
     }
-
-    h1 {
+    .dashboard h1 { /* For the main "Admin Dashboard" title */
       text-align: center;
-      color: #cc0000;
     }
-
+    .dashboard p { /* For the welcome message */
+      text-align: center;
+      font-size: 1.1em;
+    }
     .card {
-      background: #fff;
       padding: 20px;
       margin: 15px 0;
       border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      transition: background-color 0.3s, box-shadow 0.3s;
     }
-
     .card h2 {
       margin: 0;
       font-size: 20px;
     }
-
-    button {
+    /* Default button style (can be overridden by specific IDs or classes) */
+    button, .card button {
       padding: 8px 14px;
-      background: #cc0000;
-      color: white;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s;
     }
 
-    button:hover {
-      background: #990000;
+    /* Light Mode specific styles */
+    body.light-mode {
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    .light-mode .dashboard h1 {
+      color: #333;
+    }
+    .light-mode .dashboard p { /* Welcome message */
+        color: #555;
+    }
+    .light-mode .card {
+      background-color: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      color: #333; /* Text color for card content */
+    }
+    .light-mode .card h2 {
+        color: #333; /* Ensure card titles are dark in light mode */
+    }
+    .light-mode .card button { /* Default card buttons */
+      background-color: #007bff; /* Blue */
+      color: white;
+    }
+    .light-mode .card button:hover {
+      background-color: #0056b3;
+    }
+    .light-mode #adminLogoutButton { /* Specific styling for logout button */
+      background-color: #6c757d; /* Grey */
+      color: white;
+    }
+    .light-mode #adminLogoutButton:hover {
+      background-color: #5a6268;
+    }
+
+    /* Dark Mode specific styles */
+    body.dark-mode {
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+    }
+    .dark-mode .dashboard h1 {
+      color: #00acc1; /* Cyan accent for dark mode title */
+    }
+    .dark-mode .dashboard p { /* Welcome message */
+        color: #bbb;
+    }
+    .dark-mode .card {
+      background-color: #2c2c2c; /* Darker card background */
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4); /* More pronounced shadow for dark mode */
+      color: #f0f0f0; /* Light text for card content */
+    }
+    .dark-mode .card h2 {
+        color: #e0e0e0; /* Lighter card titles */
+    }
+    .dark-mode .card button { /* Default card buttons */
+      background-color: #008cba; /* Slightly different blue for dark mode */
+      color: white;
+    }
+    .dark-mode .card button:hover {
+      background-color: #007da5;
+    }
+    .dark-mode #adminLogoutButton { /* Specific styling for logout button */
+      background-color: #4f5b62; /* Darker grey */
+      color: #f0f0f0;
+    }
+    .dark-mode #adminLogoutButton:hover {
+      background-color: #40494f;
     }
   </style>
 </head>
@@ -81,6 +144,58 @@
     function navigate(url) {
       window.location.href = url;
     }
+  </script>
+
+  <!-- Added Logout Button and Scripts -->
+  <div style="text-align: center; margin-top: 30px;">
+    <button id="adminLogoutButton">Logout</button> <!-- Inline styles removed -->
+  </div>
+
+  <script src="../scripts/data.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script src="../scripts/theme.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof initializeData === 'function') {
+        initializeData(); // Ensure data is initialized if needed by other scripts or linked pages
+      } else {
+        console.error("initializeData function not found. Ensure data.js is loaded.");
+      }
+
+      const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+
+      if (!currentUser || currentUser.role !== 'admin') {
+        alert("Access Denied. You are not authorized to view this page. Redirecting to login.");
+        window.location.href = 'admin-login.html'; // Redirect to admin login
+      } else {
+        // Display welcome message for the admin
+        const h1Element = document.querySelector('.dashboard h1');
+        if (h1Element) {
+          const welcomeEl = document.createElement('p');
+          welcomeEl.textContent = `Welcome, Admin ${currentUser.username}!`;
+          welcomeEl.style.textAlign = 'center';
+          welcomeEl.style.fontSize = '1.1em';
+          welcomeEl.style.color = '#555';
+          h1Element.insertAdjacentElement('afterend', welcomeEl);
+        }
+        console.log(`Admin user ${currentUser.username} authenticated.`);
+      }
+
+      const logoutButton = document.getElementById('adminLogoutButton');
+      if (logoutButton) {
+        logoutButton.addEventListener('click', function() {
+          if (typeof logoutUser === 'function') {
+            logoutUser(); // This function from app.js handles logging and redirection
+          } else {
+            console.error("logoutUser function not found. Ensure app.js is loaded.");
+            alert("Logout failed. Function not available.");
+            // Fallback logout
+            localStorage.removeItem('currentUser');
+            window.location.href = '../index.html';
+          }
+        });
+      }
+    });
   </script>
 </body>
 </html>

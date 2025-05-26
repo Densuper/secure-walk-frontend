@@ -4,58 +4,120 @@
   <meta charset="UTF-8">
   <title>Admin Login - Secure Walkways</title>
   <style>
+    /* Base styles */
     body {
       font-family: Arial, sans-serif;
-      background: #181818;
-      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       margin: 0;
+      transition: background-color 0.3s, color 0.3s;
     }
     h2 {
       margin-bottom: 30px;
     }
-    input {
+    input[type="text"], input[type="password"] {
       padding: 12px;
       margin: 10px 0;
       width: 80%;
       max-width: 300px;
       border-radius: 8px;
-      border: none;
+      box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
-    button {
+    button[type="submit"], button {
       padding: 12px;
       width: 80%;
       max-width: 300px;
-      background-color: #ff4d4d;
-      color: white;
       font-size: 16px;
-      border: none;
       border-radius: 8px;
       cursor: pointer;
       margin-top: 20px;
+      border: none;
+      transition: background-color 0.2s;
     }
-    button:hover {
+    #errorMessage {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    /* Dark Mode */
+    body.dark-mode {
+      background-color: #181818;
+      color: #fff;
+    }
+    .dark-mode h2 {
+      color: #fff;
+    }
+    .dark-mode input[type="text"], 
+    .dark-mode input[type="password"] {
+      background-color: #2c2c2c;
+      color: #fff;
+      border: 1px solid #444;
+    }
+    .dark-mode input::placeholder {
+      color: #aaa;
+    }
+    .dark-mode button {
+      background-color: #ff4d4d;
+      color: white;
+    }
+    .dark-mode button:hover {
       background-color: #cc0000;
+    }
+    .dark-mode #errorMessage {
+      color: #ff7070;
+    }
+
+    /* Light Mode */
+    body.light-mode {
+      background-color: #f0f2f5;
+      color: #333;
+    }
+    .light-mode h2 {
+      color: #333;
+    }
+    .light-mode input[type="text"], 
+    .light-mode input[type="password"] {
+      background-color: #fff;
+      color: #333;
+      border: 1px solid #ccc;
+    }
+    .light-mode input::placeholder {
+      color: #666;
+    }
+    .light-mode button {
+      background-color: #dc3545;
+      color: white;
+    }
+    .light-mode button:hover {
+      background-color: #c82333;
+    }
+    .light-mode #errorMessage {
+      color: #d93025;
     }
   </style>
 </head>
 <body>
   <h2>Admin Login</h2>
+
   <input type="text" placeholder="Admin Username" id="adminUser">
   <input type="password" placeholder="Password" id="adminPass">
   <button onclick="adminLogin()">Login</button>
+
   <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
 
+  <script src="../scripts/data.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script src="../scripts/theme.js" defer></script>
   <script>
     async function adminLogin() {
       const username = document.getElementById('adminUser').value;
       const password = document.getElementById('adminPass').value;
       const errorMessageElement = document.getElementById("errorMessage");
-      errorMessageElement.textContent = ''; // Clear previous error messages
+      errorMessageElement.textContent = '';
 
       if (!username || !password) {
         errorMessageElement.textContent = "Please enter both username and password.";
@@ -63,7 +125,7 @@
       }
 
       try {
-        const response = await fetch('/api/admin/login', { // Changed to /api/admin/login
+        const response = await fetch('/api/admin/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -74,7 +136,7 @@
         const data = await response.json();
 
         if (response.ok) {
-          localStorage.setItem('adminAuthToken', data.token); // Changed to adminAuthToken
+          localStorage.setItem('adminAuthToken', data.token);
           window.location.href = "admin-dashboard.html";
         } else {
           errorMessageElement.textContent = data.message || 'Admin login failed. Please try again.';

@@ -1,89 +1,178 @@
+Captain Denver, your **`user-login.html`** file is stuck in a Git **merge conflict**, where two branches offer different login methods:
+
+---
+
+### ⚔️ Conflict Summary
+
+| Branch                           | Method               | Logic                                           |
+| -------------------------------- | -------------------- | ----------------------------------------------- |
+| `feature/full-app-functionality` | Form-based submit    | Uses `loginUser()` from `app.js`, works offline |
+| `master`                         | Button + async/await | Uses `fetch('/api/login')`, needs backend/API   |
+
+---
+
+### ✅ Recommended: Use `feature/full-app-functionality`
+
+Because your **Secure Walkways** app is designed for **local/offline use** and uses `data.js` + `app.js` for session storage and role validation.
+
+---
+
+### ✅ Here is the **final conflict-free version** (safe to paste):
+
+```html
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <title>User Login - Secure Walkways</title>
   <style>
+    /* Base styles */
     body {
       font-family: Arial, sans-serif;
-      background: #121212;
-      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       margin: 0;
+      transition: background-color 0.3s, color 0.3s;
     }
     h2 {
       margin-bottom: 30px;
     }
-    input {
+    input[type="text"], input[type="password"] {
       padding: 12px;
       margin: 10px 0;
       width: 80%;
       max-width: 300px;
       border-radius: 8px;
-      border: none;
+      box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
-    button {
+    button[type="submit"] {
       padding: 12px;
       width: 80%;
       max-width: 300px;
-      background-color: #0077ff;
-      color: white;
       font-size: 16px;
-      border: none;
       border-radius: 8px;
       cursor: pointer;
       margin-top: 20px;
+      border: none;
+      transition: background-color 0.2s;
     }
-    button:hover {
+    #errorMessage {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    /* Dark Mode */
+    body.dark-mode {
+      background-color: #121212;
+      color: #fff;
+    }
+    .dark-mode h2 {
+      color: #fff;
+    }
+    .dark-mode input[type="text"], 
+    .dark-mode input[type="password"] {
+      background-color: #2c2c2c;
+      color: #fff;
+      border: 1px solid #444;
+    }
+    .dark-mode input::placeholder {
+      color: #aaa;
+    }
+    .dark-mode button[type="submit"] {
+      background-color: #0077ff;
+      color: white;
+    }
+    .dark-mode button[type="submit"]:hover {
       background-color: #005dcc;
+    }
+    .dark-mode #errorMessage {
+      color: #ff4d4d;
+    }
+
+    /* Light Mode */
+    body.light-mode {
+      background-color: #f0f2f5;
+      color: #333;
+    }
+    .light-mode h2 {
+      color: #333;
+    }
+    .light-mode input[type="text"], 
+    .light-mode input[type="password"] {
+      background-color: #fff;
+      color: #333;
+      border: 1px solid #ccc;
+    }
+    .light-mode input::placeholder {
+      color: #666;
+    }
+    .light-mode button[type="submit"] {
+      background-color: #007bff;
+      color: white;
+    }
+    .light-mode button[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+    .light-mode #errorMessage {
+      color: #d93025;
     }
   </style>
 </head>
 <body>
   <h2>User Login</h2>
-  <input type="text" placeholder="Username" id="username">
-  <input type="password" placeholder="Password" id="password">
-  <button onclick="login()">Login</button>
-  <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
 
+  <form id="userLoginForm">
+    <input type="text" placeholder="Username" id="username" required>
+    <input type="password" placeholder="Password" id="password" required>
+    <button type="submit">Login</button>
+  </form>
+
+  <div id="errorMessage"></div>
+
+  <script src="../scripts/data.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script src="../scripts/theme.js" defer></script>
   <script>
-    async function login() {
-      const username = document.getElementById('username').value;
+    document.getElementById('userLoginForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
-      const errorMessageElement = document.getElementById("errorMessage");
-      errorMessageElement.textContent = ''; // Clear previous error messages
+      const errorMessageDiv = document.getElementById('errorMessage');
+      errorMessageDiv.textContent = '';
 
       if (!username || !password) {
-        errorMessageElement.textContent = "Please enter both username and password.";
+        errorMessageDiv.textContent = 'Please enter both username and password.';
         return;
       }
 
-      try {
-        const response = await fetch('/api/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ username, password }),
-        });
+      const loginResult = loginUser(username, password);
 
-        const data = await response.json();
-
-        if (response.ok) {
-          localStorage.setItem('authToken', data.token);
-          window.location.href = "user-dashboard.html";
+      if (loginResult && loginResult.success) {
+        if (loginResult.role === 'user') {
+          logEvent(username, 'USER_LOGIN_SUCCESS', 'User logged in successfully.');
+          window.location.href = 'user-dashboard.html';
         } else {
-          errorMessageElement.textContent = data.message || 'Login failed. Please try again.';
+          logEvent(username, 'USER_LOGIN_FAIL', 'Attempted login with non-user role: ' + loginResult.role);
+          errorMessageDiv.textContent = 'Access denied. Please use the correct login page.';
+          localStorage.removeItem('currentUser');
         }
-      } catch (error) {
-        console.error('Login error:', error);
-        errorMessageElement.textContent = 'An error occurred during login. Please try again later.';
+      } else {
+        logEvent(username, 'USER_LOGIN_FAIL', loginResult.message || 'Invalid credentials.');
+        errorMessageDiv.textContent = loginResult.message || 'Login failed. Please check your credentials.';
       }
-    }
+    });
   </script>
 </body>
 </html>
+```
+
+---
+
+✅ Paste this into `user-login.html`, then commit the resolved file.
+
+Let me know if you want a **merged version** that supports **both offline and online logins** depending on a toggle.

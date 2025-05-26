@@ -6,128 +6,187 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
+    /* Base styles */
     body {
-      font-family: sans-serif;
-      background: #f5f5f5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       padding: 20px;
       margin: 0;
-      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
     }
-
     h1 {
-      color: #cc0000;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
+      transition: color 0.3s;
     }
-
     #reader {
-      width: 320px;
-      margin: auto;
-      border: 2px solid #ccc;
+      width: 100%;
+      max-width: 400px;
       border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      overflow: hidden;
+      margin-bottom: 20px;
+      transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
     }
-
-    #result {
+    #reader video {
+      width: 100% !important;
+      height: auto !important;
+      display: block;
+    }
+    #scanResult {
       margin-top: 20px;
-      font-size: 18px;
+      padding: 10px;
+      font-size: 1.1em;
       font-weight: bold;
-      color: green;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+      text-align: center;
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
-
-    .btn {
-      margin-top: 25px;
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #cc0000;
-      color: white;
+    .btn-back {
+      margin-top: 30px;
+      padding: 12px 25px;
+      font-size: 1em;
+      font-weight: bold;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      text-decoration: none;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    .btn:hover {
-      background-color: #990000;
-    }
+    /* Dark Mode */
+    body.dark-mode { background-color: #1a1a1a; color: #e0e0e0; }
+    .dark-mode h1 { color: #00acc1; }
+    .dark-mode #reader { background-color: #2c2c2c; border: 1px solid #444; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+    .dark-mode .scan-success { color: #38c172; background-color: #203d2b; border: 1px solid #38c172; }
+    .dark-mode .scan-error { color: #e74c3c; background-color: #4a2526; border: 1px solid #e74c3c; }
+    .dark-mode .scan-info { color: #79c0d8; background-color: #253946; border: 1px solid #79c0d8; }
+    .dark-mode .btn-back { background-color: #007bff; color: white; }
+    .dark-mode .btn-back:hover { background-color: #0056b3; }
+
+    /* Light Mode */
+    body.light-mode { background-color: #f0f2f5; color: #333; }
+    .light-mode h1 { color: #007bff; }
+    .light-mode #reader { background-color: #e9ecef; border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .light-mode .scan-success { color: #1e7e34; background-color: #d4edda; border: 1px solid #c3e6cb; }
+    .light-mode .scan-error { color: #c82333; background-color: #f8d7da; border: 1px solid #f5c6cb; }
+    .light-mode .scan-info { color: #004085; background-color: #cce5ff; border: 1px solid #b8daff; }
+    .light-mode .btn-back { background-color: #6c757d; color: white; }
+    .light-mode .btn-back:hover { background-color: #5a6268; }
   </style>
 </head>
 <body>
 
   <h1>Scan QR Code</h1>
 
-  <div id="reader"></div>
-  <div id="result">Waiting for scan...</div>
+  <div id="reader" style="display: none;"></div>
+  <div id="scanResult">Initializing scanner...</div>
 
-  <button class="btn" onclick="goBack()">← Back to Dashboard</button>
+  <button class="btn-back" onclick="goBack()">← Back to Dashboard</button>
 
+  <script src="../scripts/data.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script src="../scripts/theme.js" defer></script>
   <script>
+    let currentUser = null;
+    let activeWalk = null;
+    let html5QrCode = null;
+
     function goBack() {
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().catch(err => console.error("Error stopping scanner:", err));
+      }
       window.location.href = "user-dashboard.html";
     }
 
-    const html5QrCode = new Html5Qrcode("reader");
+    document.addEventListener('DOMContentLoaded', function() {
+      const readerDiv = document.getElementById('reader');
+      const scanResultDiv = document.getElementById('scanResult');
 
-    async function onScanSuccess(decodedText, decodedResult) { // Made async
-      const resultElement = document.getElementById("result");
+      if (typeof initializeData === 'function') initializeData();
       
-      // Stop scanning after first scan
-      try {
-        await html5QrCode.stop();
-        console.log("QR Code scanning stopped.");
-      } catch (err) {
-        console.error("Failed to stop QR Code scanning.", err);
-        // Potentially display an error to the user, but for now, we'll proceed with API call
-      }
-
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        resultElement.innerText = "Error: User not authenticated. Please login again.";
-        resultElement.style.color = "red";
+      currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+      if (!currentUser) {
+        scanResultDiv.textContent = "User not logged in. Please login from the dashboard.";
+        scanResultDiv.className = 'scan-error';
         return;
       }
 
-      resultElement.innerText = "Processing scan..."; // Intermediate message
+      activeWalk = typeof getActiveWalkForUser === 'function' ? getActiveWalkForUser(currentUser.username) : null;
+      if (!activeWalk) {
+        scanResultDiv.textContent = "No active patrol found. Please start a patrol from the dashboard.";
+        scanResultDiv.className = 'scan-error';
+        return;
+      }
 
-      try {
-        const response = await fetch('/api/scan', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token,
-          },
-          body: JSON.stringify({ qr_code_identifier: decodedText }),
-        });
+      // If all checks pass, show reader and initialize
+      readerDiv.style.display = 'block';
+      scanResultDiv.textContent = "Scanner ready. Point at a QR code.";
+      scanResultDiv.className = 'scan-info';
+      
+      html5QrCode = new Html5Qrcode("reader");
+      const qrConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-        const data = await response.json();
+      html5QrCode.start(
+        { facingMode: "environment" },
+        qrConfig,
+        onScanSuccess,
+        onScanFailure
+      ).catch(err => {
+        scanResultDiv.textContent = "Camera initialization failed: " + err;
+        scanResultDiv.className = 'scan-error';
+        readerDiv.style.display = 'none';
+      });
+    });
 
-        if (response.ok) {
-          resultElement.innerText = `Successfully scanned: ${data.checkpoint.name || decodedText}`;
-          resultElement.style.color = "green";
-        } else {
-          resultElement.innerText = `Error: ${data.message || 'Scan failed. Please try again.'}`;
-          resultElement.style.color = "red";
+    function onScanSuccess(decodedText, decodedResult) {
+      const scanResultDiv = document.getElementById('scanResult');
+      if (!activeWalk) {
+        scanResultDiv.textContent = "Error: No active walk context. Please return to dashboard.";
+        scanResultDiv.className = 'scan-error';
+        if (html5QrCode && html5QrCode.isScanning) html5QrCode.stop().catch(e => console.error(e));
+        return;
+      }
+
+      const scanTime = new Date().toISOString();
+      const updateResult = updateCheckpointStatus(activeWalk.id, decodedText, scanTime);
+
+      if (updateResult && updateResult.success) {
+        const qrCodeDetail = typeof getQrCodeById === 'function' ? getQrCodeById(decodedText) : null;
+        const checkpointName = qrCodeDetail ? qrCodeDetail.name : decodedText;
+        
+        scanResultDiv.textContent = `Checkpoint '${checkpointName}' scanned successfully!`;
+        scanResultDiv.className = 'scan-success';
+
+        if (updateResult.walkCompleted) {
+          scanResultDiv.textContent += " Walk complete! All checkpoints scanned. Redirecting to dashboard...";
+          if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().then(() => {
+              console.log("Scanner stopped due to walk completion.");
+            }).catch(err => console.error("Error stopping scanner after walk completion:", err));
+          }
+          setTimeout(() => {
+            window.location.href = "user-dashboard.html";
+          }, 3000);
         }
-      } catch (error) {
-        console.error('Scan API error:', error);
-        resultElement.innerText = 'An error occurred while submitting the scan. Please try again later.';
-        resultElement.style.color = "red";
+      } else {
+        if (updateResult && updateResult.alreadyScanned) {
+          scanResultDiv.textContent = updateResult.message || `Checkpoint already scanned: ${decodedText}`;
+          scanResultDiv.className = 'scan-info';
+        } else {
+          scanResultDiv.textContent = "Error: " + (updateResult.message || `Invalid QR Code (${decodedText}) for this patrol.`);
+          scanResultDiv.className = 'scan-error';
+        }
       }
     }
 
-    function onScanError(errorMessage) {
-      // Ignore for now; this just runs if nothing is detected
+    function onScanFailure(error) {
+      // Silent on frame misses
     }
-
-    html5QrCode.start(
-      { facingMode: "environment" },
-      {
-        fps: 10,
-        qrbox: { width: 250, height: 250 }
-      },
-      onScanSuccess,
-      onScanError
-    ).catch(err => {
-      document.getElementById("result").innerText = "Camera error: " + err;
-    });
   </script>
 </body>
 </html>

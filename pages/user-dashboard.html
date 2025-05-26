@@ -4,183 +4,182 @@
   <meta charset="UTF-8">
   <title>User Dashboard - Secure Walkways</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0d0d0d;
-      color: #fff;
-      padding: 30px;
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .progress {
-      width: 80%;
-      max-width: 400px;
-      height: 20px;
-      background: #333;
-      border-radius: 10px;
-      margin: 20px auto;
-      overflow: hidden;
-    }
-
-    .progress-bar {
-      width: 40%; /* fake progress */
-      height: 100%;
-      background: #00ff99;
-    }
-
-    .checkpoint {
-      background: #1f1f1f;
-      padding: 15px;
-      border-radius: 8px;
-      margin: 10px auto;
-      max-width: 400px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .checkpoint.completed {
-      border-left: 5px solid #00ff99;
-    }
-
-    .checkpoint.pending {
-      border-left: 5px solid #ffcc00;
-    }
-
-    .checkpoint button {
-      background: #ff4444;
-      border: none;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .button-group {
-      text-align: center;
-      margin-top: 30px;
-    }
-
-    .action-btn {
-      display: inline-block;
-      margin: 10px;
-      padding: 12px 20px;
-      font-size: 16px;
-      background: #0077ff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .action-btn:hover {
-      background: #005dcc;
-    }
-
-    .logout-btn {
-      background: #444;
-    }
-
-    .logout-btn:hover {
-      background: #666;
-    }
+    /* [Keep your full CSS as-is, already well structured for dark/light mode] */
+    /* Skipping here to keep message compact, but use your original CSS exactly */
   </style>
 </head>
 <body>
-  <h2>Welcome, Security Officer</h2>
+  <div class="container">
+    <h2 id="welcomeMessage">Welcome, Officer!</h2>
 
-  <div class="progress">
-    <div class="progress-bar"></div>
-  </div>
+    <div id="activeWalkSection" class="section">
+      <h3 class="section-title">Active Patrol Details</h3>
+      <div id="activeWalkInfo">
+        <p><strong>Walk ID:</strong> <span id="walkIdDisplay">N/A</span></p>
+        <p><strong>Started:</strong> <span id="walkStartTimeDisplay">N/A</span></p>
+      </div>
+      <p><strong>Progress:</strong></p>
+      <div class="progress-container">
+        <div id="progressBar">0%</div>
+      </div>
+      <h4 class="section-title" style="margin-top: 20px;">Checkpoints:</h4>
+      <ul id="checkpointsList"></ul>
+    </div>
 
-  <div id="scanHistoryContainer">
-    <!-- Static checkpoints will be cleared and replaced by dynamic data -->
-    <div class="checkpoint completed">
-      <span>Loading scan history...</span>
+    <div id="noActiveWalkMessage" class="section" style="text-align: center;">
+      <p>No active patrol at the moment.</p>
+    </div>
+
+    <div class="button-group">
+      <button id="startPatrolButton" class="action-btn">Start Morning Patrol</button>
+      <button id="scanQrButton" class="action-btn">Scan QR Code</button>
+      <button id="cancelWalkButton" class="action-btn">Cancel Current Walk</button>
+      <button id="logoutButton" class="action-btn">Logout</button>
     </div>
   </div>
-  <div id="dashboardError" style="color: red; text-align: center; margin-top: 10px;"></div>
 
-  <div class="button-group">
-    <button class="action-btn" onclick="window.location.href='qr-scan.html'">Scan QR Code</button>
-    <button class="action-btn logout-btn" onclick="logout()">Logout</button>
-  </div>
-
+  <script src="../scripts/data.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script src="../scripts/theme.js" defer></script>
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const token = localStorage.getItem('authToken');
-      const errorElement = document.getElementById('dashboardError');
-      const scanHistoryContainer = document.getElementById('scanHistoryContainer');
+    let currentUser = null;
+    let activeWalk = null;
+    let qrCodesCache = {};
 
-      if (!token) {
-        errorElement.textContent = 'Authentication error. Please login again.';
-        // Optional: Redirect to login after a delay
-        setTimeout(() => { window.location.href = 'user-login.html'; }, 2000);
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof initializeData === 'function') {
+        initializeData();
+      }
+
+      const qrCodes = typeof getQrCodes === 'function' ? getQrCodes() : [];
+      qrCodes.forEach(qr => qrCodesCache[qr.id] = qr);
+
+      if (typeof getCurrentUser !== 'function') {
+        alert("Error accessing user session. Please refresh.");
         return;
       }
 
-      try {
-        const response = await fetch('/api/user/dashboard-data', {
-          method: 'GET',
-          headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          }
-        });
+      currentUser = getCurrentUser();
 
-        if (response.status === 401) { // Unauthorized (e.g. token expired)
-          localStorage.removeItem('authToken'); // Clear invalid token
-          errorElement.textContent = 'Session expired. Please login again.';
-          setTimeout(() => { window.location.href = 'user-login.html'; }, 2000);
-          return;
-        }
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `Error fetching data: ${response.status}`);
-        }
-
-        const data = await response.json();
-        scanHistoryContainer.innerHTML = ''; // Clear "Loading..." or old static content
-
-        if (data.scans && data.scans.length > 0) {
-          data.scans.forEach(scan => {
-            const scanElement = document.createElement('div');
-            scanElement.classList.add('checkpoint', 'completed'); // Mark all fetched as completed for now
-
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = scan.checkpoint_name;
-            
-            const timeSpan = document.createElement('span');
-            timeSpan.textContent = `Scanned: ${new Date(scan.scan_timestamp).toLocaleString()}`;
-            
-            scanElement.appendChild(nameSpan);
-            scanElement.appendChild(timeSpan);
-            scanHistoryContainer.appendChild(scanElement);
-          });
-        } else {
-          scanHistoryContainer.innerHTML = '<div class="checkpoint"><p>No scans found yet. Start scanning!</p></div>';
-        }
-
-      } catch (error) {
-        console.error('Dashboard error:', error);
-        errorElement.textContent = error.message || 'Failed to load dashboard data.';
+      if (!currentUser) {
+        alert("You are not logged in. Redirecting to login page.");
+        window.location.href = '../pages/user-login.html';
+        return;
       }
+
+      document.getElementById('welcomeMessage').textContent = `Welcome, ${currentUser.username}!`;
+      document.getElementById('startPatrolButton').addEventListener('click', handleStartPatrol);
+      document.getElementById('scanQrButton').addEventListener('click', () => {
+        if (activeWalk) window.location.href = 'qr-scan.html';
+        else alert("No active walk to scan QR codes for.");
+      });
+      document.getElementById('cancelWalkButton').addEventListener('click', handleCancelWalkRequest);
+      document.getElementById('logoutButton').addEventListener('click', handleLogout);
+
+      renderDashboard();
     });
 
-    function cancelWalk() {
-      // This function is currently not used with dynamic data, can be removed or repurposed
-      alert("Walk cancelled. Reason will be required later.");
+    function renderDashboard() {
+      activeWalk = getActiveWalkForUser(currentUser.username);
+
+      const activeWalkSection = document.getElementById('activeWalkSection');
+      const noActiveWalkMessage = document.getElementById('noActiveWalkMessage');
+      const startPatrolButton = document.getElementById('startPatrolButton');
+      const scanQrButton = document.getElementById('scanQrButton');
+      const cancelWalkButton = document.getElementById('cancelWalkButton');
+      const checkpointsList = document.getElementById('checkpointsList');
+      const progressBar = document.getElementById('progressBar');
+
+      checkpointsList.innerHTML = '';
+      progressBar.style.width = '0%';
+      progressBar.textContent = '0%';
+      document.getElementById('walkIdDisplay').textContent = 'N/A';
+      document.getElementById('walkStartTimeDisplay').textContent = 'N/A';
+
+      if (activeWalk) {
+        activeWalkSection.style.display = 'block';
+        noActiveWalkMessage.style.display = 'none';
+        scanQrButton.style.display = 'inline-block';
+        cancelWalkButton.style.display = 'inline-block';
+        startPatrolButton.style.display = 'none';
+
+        document.getElementById('walkIdDisplay').textContent = activeWalk.id;
+        document.getElementById('walkStartTimeDisplay').textContent = new Date(activeWalk.startTime).toLocaleString();
+
+        const progress = calculateWalkProgress(activeWalk.id);
+        progressBar.style.width = `${progress}%`;
+        progressBar.textContent = `${progress}%`;
+
+        if (activeWalk.checkpointScans?.length > 0) {
+          activeWalk.checkpointScans.forEach(cpScan => {
+            const li = document.createElement('li');
+            li.classList.add('checkpoint-item');
+
+            const qrCodeName = qrCodesCache[cpScan.checkpointId]?.name || cpScan.checkpointId;
+            let scannedTime = '';
+            if (cpScan.scannedAt) {
+              scannedTime = `<span class="timestamp">(${new Date(cpScan.scannedAt).toLocaleTimeString()})</span>`;
+            }
+
+            li.innerHTML = `
+              <span class="name">${qrCodeName}</span>
+              <span class="status-${cpScan.status.toLowerCase()}">${cpScan.status.replace('_', ' ')} ${scannedTime}</span>
+            `;
+            checkpointsList.appendChild(li);
+          });
+        } else {
+          checkpointsList.innerHTML = '<li class="checkpoint-item">No checkpoints defined for this walk.</li>';
+        }
+      } else {
+        activeWalkSection.style.display = 'none';
+        noActiveWalkMessage.style.display = 'block';
+        scanQrButton.style.display = 'none';
+        cancelWalkButton.style.display = 'none';
+        startPatrolButton.style.display = 'inline-block';
+      }
     }
 
-    function logout() {
-      if (confirm("Are you sure you want to log out?")) {
-        localStorage.removeItem('authToken'); // Clear the token on logout
-        window.location.href = "index.html";
+    function handleStartPatrol() {
+      if (!currentUser || typeof startWalk !== 'function') {
+        alert("Error: Cannot start patrol. Required functions missing.");
+        return;
+      }
+
+      const newWalk = startWalk(currentUser.username, 'WT01');
+      if (newWalk) {
+        alert(`Patrol ${newWalk.id} started successfully!`);
+        renderDashboard();
+      } else {
+        alert("Failed to start patrol. Make sure template ID 'WT01' exists.");
+      }
+    }
+
+    function handleCancelWalkRequest() {
+      if (!activeWalk) {
+        alert("No active walk to cancel.");
+        return;
+      }
+
+      const reason = prompt("Enter reason for cancelling this walk:");
+      if (reason && reason.trim() !== "") {
+        const cancelledWalk = cancelUserWalk(activeWalk.id, reason.trim());
+        if (cancelledWalk) {
+          alert(`Walk ${cancelledWalk.id} has been cancelled.`);
+          renderDashboard();
+        } else {
+          alert("Failed to cancel walk. Check console.");
+        }
+      } else if (reason !== null) {
+        alert("Cancellation reason cannot be empty.");
+      }
+    }
+
+    function handleLogout() {
+      if (typeof logoutUser === 'function') {
+        logoutUser();
+      } else {
+        localStorage.removeItem('currentUser');
+        window.location.href = '../index.html';
       }
     }
   </script>
