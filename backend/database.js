@@ -27,6 +27,42 @@ const initializeDB = () => {
             }
         });
 
+        // Create Walks table
+        db.run(`CREATE TABLE IF NOT EXISTS Walks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            template_id TEXT,
+            start_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            end_time DATETIME,
+            status TEXT NOT NULL CHECK(status IN ('ongoing', 'completed', 'cancelled')),
+            cancellation_reason TEXT,
+            FOREIGN KEY (user_id) REFERENCES Users(id)
+        )`, (err) => {
+            if (err) {
+                console.error("Error creating Walks table:", err.message);
+            } else {
+                console.log("Walks table created or already exists.");
+            }
+        });
+
+        // Create WalkCheckpoints table
+        db.run(`CREATE TABLE IF NOT EXISTS WalkCheckpoints (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            walk_id INTEGER NOT NULL,
+            checkpoint_id INTEGER NOT NULL,
+            expected_at DATETIME,
+            scanned_at DATETIME,
+            status TEXT NOT NULL CHECK(status IN ('pending', 'scanned', 'missed', 'unable_to_scan', 'cancelled_walk')),
+            FOREIGN KEY (walk_id) REFERENCES Walks(id),
+            FOREIGN KEY (checkpoint_id) REFERENCES Checkpoints(id)
+        )`, (err) => {
+            if (err) {
+                console.error("Error creating WalkCheckpoints table:", err.message);
+            } else {
+                console.log("WalkCheckpoints table created or already exists.");
+            }
+        });
+
         // Create Checkpoints table
         db.run(`CREATE TABLE IF NOT EXISTS Checkpoints (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
