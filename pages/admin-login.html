@@ -4,65 +4,158 @@
   <meta charset="UTF-8">
   <title>Admin Login - Secure Walkways</title>
   <style>
+    /* Base styles */
     body {
       font-family: Arial, sans-serif;
-      background: #181818;
-      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       margin: 0;
+      transition: background-color 0.3s, color 0.3s;
     }
     h2 {
       margin-bottom: 30px;
     }
-    input {
+    input[type="text"], input[type="password"] {
       padding: 12px;
       margin: 10px 0;
       width: 80%;
       max-width: 300px;
       border-radius: 8px;
-      border: none;
+      box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
-    button {
+    button[type="submit"] {
       padding: 12px;
       width: 80%;
       max-width: 300px;
-      background-color: #ff4d4d;
-      color: white;
       font-size: 16px;
-      border: none;
       border-radius: 8px;
       cursor: pointer;
       margin-top: 20px;
+      border: none;
+      transition: background-color 0.2s;
     }
-    button:hover {
-      background-color: #cc0000;
+    #errorMessage {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    /* Dark Mode (current default) */
+    body.dark-mode {
+      background-color: #181818;
+      color: #fff;
+    }
+    .dark-mode h2 {
+      color: #fff;
+    }
+    .dark-mode input[type="text"], 
+    .dark-mode input[type="password"] {
+      background-color: #2c2c2c;
+      color: #fff;
+      border: 1px solid #444;
+    }
+    .dark-mode input[type="text"]::placeholder, 
+    .dark-mode input[type="password"]::placeholder {
+        color: #aaa;
+    }
+    .dark-mode button[type="submit"] {
+      background-color: #ff4d4d; /* Red theme for admin login */
+      color: white;
+    }
+    .dark-mode button[type="submit"]:hover {
+      background-color: #cc0000; /* Darker red */
+    }
+    .dark-mode #errorMessage {
+      color: #ff7070; /* Lighter red for dark background */
+    }
+
+    /* Light Mode */
+    body.light-mode {
+      background-color: #f0f2f5;
+      color: #333;
+    }
+    .light-mode h2 {
+      color: #333;
+    }
+    .light-mode input[type="text"], 
+    .light-mode input[type="password"] {
+      background-color: #fff;
+      color: #333;
+      border: 1px solid #ccc;
+    }
+    .light-mode input[type="text"]::placeholder, 
+    .light-mode input[type="password"]::placeholder {
+        color: #666;
+    }
+    .light-mode button[type="submit"] {
+      background-color: #dc3545; /* Standard red for light mode */
+      color: white;
+    }
+    .light-mode button[type="submit"]:hover {
+      background-color: #c82333; /* Darker red */
+    }
+    .light-mode #errorMessage {
+      color: #d93025; /* Standard error red */
     }
   </style>
 </head>
 <body>
   <h2>Admin Login</h2>
-  <input type="text" placeholder="Admin Username" id="adminUser">
-  <input type="password" placeholder="Password" id="adminPass">
-  <button onclick="adminLogin()">Login</button>
+  <form id="adminLoginForm">
+    <input type="text" placeholder="Admin Username" id="adminUser" required>
+    <input type="password" placeholder="Password" id="adminPass" required>
+    <button type="submit">Login</button>
+  </form>
+  <div id="errorMessage" style="color: red; margin-top: 10px;"></div>
 
+  <script src="../scripts/data.js"></script>
+  <script src="../scripts/app.js"></script>
+  <script src="../scripts/theme.js" defer></script>
   <script>
-    function adminLogin() {
-      const user = document.getElementById('adminUser').value;
-      const pass = document.getElementById('adminPass').value;
+    document.getElementById('adminLoginForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent actual form submission
 
-      // Temporary dummy check (replace with backend auth later)
-      if (user === "admin" && pass === "admin") {
-        alert("Admin login successful!");
-        // Redirect to admin dashboard (create this later)
-        location.href = "admin-dashboard.html";
-      } else {
-        alert("Invalid admin credentials");
+      const usernameInput = document.getElementById('adminUser');
+      const passwordInput = document.getElementById('adminPass');
+      const errorMessageDiv = document.getElementById('errorMessage');
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value; // Get password as is
+
+      // Clear previous error messages
+      errorMessageDiv.textContent = '';
+
+      if (!username || !password) {
+        errorMessageDiv.textContent = 'Please enter both username and password.';
+        return;
       }
-    }
+
+      // Call loginUser from app.js
+      // Assuming data.js calls initializeData() on load.
+      const loginResult = loginUser(username, password);
+
+      if (loginResult && loginResult.success) {
+        if (loginResult.role === 'admin') {
+          // Call logEvent from app.js
+          logEvent(username, 'ADMIN_LOGIN_SUCCESS', 'Admin user logged in successfully.');
+          // Redirect to admin dashboard
+          window.location.href = 'admin-dashboard.html';
+        } else {
+          // User has a role, but it's not 'admin'
+          logEvent(username, 'ADMIN_LOGIN_FAIL', 'Attempted admin login with non-admin role: ' + loginResult.role);
+          errorMessageDiv.textContent = 'Access denied. You do not have admin privileges.';
+          // Clear current user from local storage as loginUser might have set it
+          localStorage.removeItem('currentUser');
+        }
+      } else {
+        // loginResult.success is false
+        logEvent(username, 'ADMIN_LOGIN_FAIL', loginResult.message || 'Invalid username or password.');
+        errorMessageDiv.textContent = loginResult.message || 'Login failed. Please check your credentials.';
+      }
+    });
   </script>
 </body>
 </html>
