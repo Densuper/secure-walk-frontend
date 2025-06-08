@@ -1,5 +1,9 @@
 const sqlite3 = require('sqlite3').verbose();
-const DBSOURCE = "securewalkways.db";
+const path = require('path');
+
+// Use an absolute path so the database is always created inside the backend
+// directory regardless of the current working directory
+const DBSOURCE = path.join(__dirname, 'securewalkways.db');
 
 let db = new sqlite3.Database(DBSOURCE, (err) => {
     if (err) {
@@ -114,13 +118,15 @@ const populateInitialData = () => {
             db.get("SELECT username FROM Users WHERE username = ?", [user.username], (err, row) => {
                 if (err) { console.error(`Error checking for user ${user.username}:`, err.message); return; }
                 if (!row) {
-                    bcrypt.hash(user.password, SALT_ROUNDS, (hashErr, hashedPassword) => {
-                        if (hashErr) { console.error(`Error hashing password for ${user.username}:`, hashErr.message); return; }
+                    try {
+                        const hashedPassword = bcrypt.hashSync(user.password, SALT_ROUNDS);
                         insertUserStmt.run(user.username, hashedPassword, user.role, function(runErr) {
                             if (runErr) { console.error(`Error inserting user ${user.username}:`, runErr.message); }
                             else { console.log(`User ${user.username} created with ID ${this.lastID}.`); }
                         });
-                    });
+                    } catch (hashErr) {
+                        console.error(`Error hashing password for ${user.username}:`, hashErr.message);
+                    }
                 } else {
                     console.log(`User ${user.username} already exists.`);
                 }

@@ -20,6 +20,10 @@ app.use('/api', authRoutes);
 app.use('/api', scanRoutes);
 // Mount user routes
 app.use('/api/user', userRoutes);
+// Mount admin user routes
+app.use('/api/admin/users', adminUserRoutes);
+// Mount admin checkpoint routes
+app.use('/api/admin/checkpoints', checkpointRoutes);
 // Mount walk routes
 app.use('/api', walkRoutes);
 
