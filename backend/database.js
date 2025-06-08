@@ -1,5 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
-const DBSOURCE = "securewalkways.db";
+const path = require('path');
+// Resolve the database path relative to this file so it lives in the backend folder
+const DBSOURCE = path.join(__dirname, 'securewalkways.db');
 
 let db = new sqlite3.Database(DBSOURCE, (err) => {
     if (err) {
