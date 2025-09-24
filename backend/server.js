@@ -1,5 +1,5 @@
 const express = require('express');
-const { initializeDB } = require('./database'); // Import initializeDB
+const { dbReady } = require('./database'); // Ensure DB is initialized before handling requests
 const authRoutes = require('./routes/authRoutes'); // Import auth routes
 const scanRoutes = require('./routes/scanRoutes'); // Import scan routes
 const userRoutes = require('./routes/userRoutes'); // Import user routes
@@ -9,10 +9,17 @@ const walkRoutes = require('./routes/walkRoutes'); // Import walk routes
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Initialize the database and tables
-initializeDB();
-
 app.use(express.json()); // Middleware to parse JSON bodies
+
+// Ensure the database has finished initializing before handling requests
+app.use(async (req, res, next) => {
+  try {
+    await dbReady;
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Mount auth routes
 app.use('/api', authRoutes);
