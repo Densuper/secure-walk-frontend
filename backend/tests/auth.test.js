@@ -1,3 +1,6 @@
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret';
+process.env.SEED_DEMO_DATA = 'true';
+
 const request = require('supertest');
 const { app, server } = require('../server'); // Assuming server.js exports app and server
 const { db } = require('../database');

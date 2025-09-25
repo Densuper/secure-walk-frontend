@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'your_jwt_secret_key'; // Should be the same as in authController.js and ideally from env variables
+const { JWT_SECRET } = require('../config');
 
 const verifyToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
