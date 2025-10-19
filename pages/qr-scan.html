@@ -103,12 +103,10 @@
       window.location.href = "user-dashboard.html";
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
       const readerDiv = document.getElementById('reader');
       const scanResultDiv = document.getElementById('scanResult');
 
-      if (typeof initializeData === 'function') initializeData();
-      
       currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
       if (!currentUser) {
         scanResultDiv.textContent = "User not logged in. Please login from the dashboard.";
@@ -116,7 +114,13 @@
         return;
       }
 
-      activeWalk = typeof getActiveWalkForUser === 'function' ? getActiveWalkForUser(currentUser.username) : null;
+      if (typeof getActiveWalkForUser === 'function') {
+        try {
+          activeWalk = await getActiveWalkForUser(currentUser.username);
+        } catch (error) {
+          console.error('Error loading active walk for scanner:', error);
+        }
+      }
       if (!activeWalk) {
         scanResultDiv.textContent = "No active patrol found. Please start a patrol from the dashboard.";
         scanResultDiv.className = 'scan-error';
@@ -143,7 +147,7 @@
       });
     });
 
-    function onScanSuccess(decodedText, decodedResult) {
+    async function onScanSuccess(decodedText, decodedResult) {
       const scanResultDiv = document.getElementById('scanResult');
       if (!activeWalk) {
         scanResultDiv.textContent = "Error: No active walk context. Please return to dashboard.";
@@ -153,14 +157,22 @@
       }
 
       const scanTime = new Date().toISOString();
-      const updateResult = updateCheckpointStatus(activeWalk.id, decodedText, scanTime);
+      const updateResult = await updateCheckpointStatus(activeWalk.id, decodedText, scanTime);
 
       if (updateResult && updateResult.success) {
-        const qrCodeDetail = typeof getQrCodeById === 'function' ? getQrCodeById(decodedText) : null;
-        const checkpointName = qrCodeDetail ? qrCodeDetail.name : decodedText;
-        
+        const checkpointDetail = Array.isArray(activeWalk.checkpoints)
+          ? activeWalk.checkpoints.find(cp => cp.qr_code_identifier === decodedText)
+          : null;
+        const checkpointName = checkpointDetail?.name || decodedText;
+
         scanResultDiv.textContent = `Checkpoint '${checkpointName}' scanned successfully!`;
         scanResultDiv.className = 'scan-success';
+
+        try {
+          activeWalk = await getActiveWalkForUser(currentUser.username);
+        } catch (error) {
+          console.error('Error refreshing active walk after scan:', error);
+        }
 
         if (updateResult.walkCompleted) {
           scanResultDiv.textContent += " Walk complete! All checkpoints scanned. Redirecting to dashboard...";

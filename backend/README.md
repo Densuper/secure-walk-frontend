@@ -13,6 +13,15 @@ This directory contains the backend server code for the Secure Walkways applicat
     npm install
     ```
 
+3.  **Configure environment variables:**
+    Create a `.env` file in this directory (or set environment variables another way) with at least the following values:
+    ```bash
+    JWT_SECRET=replace_with_a_secure_secret
+    # Optional: seed predictable demo users and checkpoints for local development
+    SEED_DEMO_DATA=true
+    ```
+    The server will refuse to start if `JWT_SECRET` is not defined.
+
 ## Running the Server
 
 To start the backend server, run the following command from the `backend` directory:
@@ -30,6 +39,8 @@ The backend provides the following main API endpoints under the `/api` prefix (e
     *   `POST /admin/login`: Admin login. Expects `username` and `password`. Returns a JWT.
 *   **QR Code Scanning:**
     *   `POST /scan`: Records a QR code scan. Expects `qr_code_identifier`. Requires JWT authentication.
+*   **Checkpoint Catalog:**
+    *   `GET /checkpoints`: Returns the list of checkpoints available for patrols. Requires JWT authentication.
 *   **User Data:**
     *   `GET /user/dashboard-data`: Retrieves data for the user dashboard, including recent scans. Requires JWT authentication.
 

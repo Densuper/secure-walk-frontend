@@ -1,8 +1,7 @@
 const { db } = require('../database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = 'your_jwt_secret_key'; // Replace with a strong, environment-specific key in production
+const { JWT_SECRET } = require('../config');
 
 const loginUser = async (req, res) => {
     const { username, password } = req.body;

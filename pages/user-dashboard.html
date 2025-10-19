@@ -44,16 +44,9 @@
   <script>
     let currentUser = null;
     let activeWalk = null;
-    let qrCodesCache = {};
+    let isLoading = false;
 
     document.addEventListener('DOMContentLoaded', function() {
-      if (typeof initializeData === 'function') {
-        initializeData();
-      }
-
-      const qrCodes = typeof getQrCodes === 'function' ? getQrCodes() : [];
-      qrCodes.forEach(qr => qrCodesCache[qr.id] = qr);
-
       if (typeof getCurrentUser !== 'function') {
         alert("Error accessing user session. Please refresh.");
         return;
@@ -68,19 +61,41 @@
       }
 
       document.getElementById('welcomeMessage').textContent = `Welcome, ${currentUser.username}!`;
-      document.getElementById('startPatrolButton').addEventListener('click', handleStartPatrol);
+      document.getElementById('startPatrolButton').addEventListener('click', () => {
+        handleStartPatrol().catch(error => {
+          console.error('Error starting patrol:', error);
+          alert('Unexpected error starting patrol.');
+        });
+      });
       document.getElementById('scanQrButton').addEventListener('click', () => {
         if (activeWalk) window.location.href = 'qr-scan.html';
         else alert("No active walk to scan QR codes for.");
       });
-      document.getElementById('cancelWalkButton').addEventListener('click', handleCancelWalkRequest);
+      document.getElementById('cancelWalkButton').addEventListener('click', () => {
+        handleCancelWalkRequest().catch(error => {
+          console.error('Error cancelling walk:', error);
+          alert('Unexpected error cancelling walk.');
+        });
+      });
       document.getElementById('logoutButton').addEventListener('click', handleLogout);
 
-      renderDashboard();
+      renderDashboard().catch(error => {
+        console.error('Error rendering dashboard:', error);
+        alert('Unable to load dashboard. Please refresh.');
+      });
     });
 
-    function renderDashboard() {
-      activeWalk = getActiveWalkForUser(currentUser.username);
+    async function renderDashboard() {
+      if (isLoading) {
+        return;
+      }
+      isLoading = true;
+
+      try {
+        activeWalk = await getActiveWalkForUser(currentUser.username);
+      } finally {
+        isLoading = false;
+      }
 
       const activeWalkSection = document.getElementById('activeWalkSection');
       const noActiveWalkMessage = document.getElementById('noActiveWalkMessage');
@@ -104,26 +119,27 @@
         startPatrolButton.style.display = 'none';
 
         document.getElementById('walkIdDisplay').textContent = activeWalk.id;
-        document.getElementById('walkStartTimeDisplay').textContent = new Date(activeWalk.startTime).toLocaleString();
+        const startTime = activeWalk.start_time || activeWalk.startTime;
+        document.getElementById('walkStartTimeDisplay').textContent = startTime ? new Date(startTime).toLocaleString() : 'N/A';
 
-        const progress = calculateWalkProgress(activeWalk.id);
+        const progress = calculateWalkProgress(activeWalk);
         progressBar.style.width = `${progress}%`;
         progressBar.textContent = `${progress}%`;
 
-        if (activeWalk.checkpointScans?.length > 0) {
-          activeWalk.checkpointScans.forEach(cpScan => {
+        if (Array.isArray(activeWalk.checkpoints) && activeWalk.checkpoints.length > 0) {
+          activeWalk.checkpoints.forEach(cp => {
             const li = document.createElement('li');
             li.classList.add('checkpoint-item');
 
-            const qrCodeName = qrCodesCache[cpScan.checkpointId]?.name || cpScan.checkpointId;
+            const checkpointName = cp.name || cp.qr_code_identifier || 'Checkpoint';
             let scannedTime = '';
-            if (cpScan.scannedAt) {
-              scannedTime = `<span class="timestamp">(${new Date(cpScan.scannedAt).toLocaleTimeString()})</span>`;
+            if (cp.scanned_at) {
+              scannedTime = `<span class="timestamp">(${new Date(cp.scanned_at).toLocaleTimeString()})</span>`;
             }
 
             li.innerHTML = `
-              <span class="name">${qrCodeName}</span>
-              <span class="status-${cpScan.status.toLowerCase()}">${cpScan.status.replace('_', ' ')} ${scannedTime}</span>
+              <span class="name">${checkpointName}</span>
+              <span class="status-${cp.status.toLowerCase()}">${cp.status.replace(/_/g, ' ')} ${scannedTime}</span>
             `;
             checkpointsList.appendChild(li);
           });
@@ -139,22 +155,22 @@
       }
     }
 
-    function handleStartPatrol() {
+    async function handleStartPatrol() {
       if (!currentUser || typeof startWalk !== 'function') {
         alert("Error: Cannot start patrol. Required functions missing.");
         return;
       }
 
-      const newWalk = startWalk(currentUser.username, 'WT01');
+      const newWalk = await startWalk(currentUser.username, 'WT01');
       if (newWalk) {
         alert(`Patrol ${newWalk.id} started successfully!`);
-        renderDashboard();
+        await renderDashboard();
       } else {
-        alert("Failed to start patrol. Make sure template ID 'WT01' exists.");
+        alert("Failed to start patrol. Ensure checkpoints are configured in the system.");
       }
     }
 
-    function handleCancelWalkRequest() {
+    async function handleCancelWalkRequest() {
       if (!activeWalk) {
         alert("No active walk to cancel.");
         return;
@@ -162,10 +178,10 @@
 
       const reason = prompt("Enter reason for cancelling this walk:");
       if (reason && reason.trim() !== "") {
-        const cancelledWalk = cancelUserWalk(activeWalk.id, reason.trim());
+        const cancelledWalk = await cancelUserWalk(activeWalk.id, reason.trim());
         if (cancelledWalk) {
           alert(`Walk ${cancelledWalk.id} has been cancelled.`);
-          renderDashboard();
+          await renderDashboard();
         } else {
           alert("Failed to cancel walk. Check console.");
         }

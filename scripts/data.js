@@ -4,69 +4,12 @@
  * Initializes local storage with sample data if no existing data is found.
  */
 function initializeData() {
-  // Check for existing users data
-  if (!localStorage.getItem('users')) {
-    const sampleUsers = [
-      {
-        username: 'admin',
-        role: 'admin',
-        // password: 'hashed_password_placeholder', // In a real app, use a strong hashing algorithm
-      },
-      {
-        username: 'user1',
-        role: 'user',
-        // password: 'hashed_password_placeholder',
-      },
-    ];
-    localStorage.setItem('users', JSON.stringify(sampleUsers));
-  }
-
-  // Check for existing QR codes data
-  if (!localStorage.getItem('qrCodes')) {
-    const sampleQrCodes = [
-      { id: 'CP001', name: 'Main Entrance', location: 'Building A, 1st Floor' },
-      { id: 'CP002', name: 'Server Room', location: 'Building A, 2nd Floor' },
-      { id: 'CP003', name: 'Exit B', location: 'Building B, Ground Floor' },
-    ];
-    localStorage.setItem('qrCodes', JSON.stringify(sampleQrCodes));
-  }
-
-  // Check for existing walk templates data
-  if (!localStorage.getItem('walkTemplates')) {
-    const sampleWalkTemplates = [
-      {
-        id: 'WT01',
-        name: 'Morning Patrol',
-        description: 'Standard morning patrol route',
-        checkpoints: ['CP001', 'CP002', 'CP003'],
-      },
-      {
-        id: 'WT02',
-        name: 'Evening Security Check',
-        description: 'Perimeter check and door lock verification',
-        checkpoints: ['CP003', 'CP001'],
-      },
-    ];
-    localStorage.setItem('walkTemplates', JSON.stringify(sampleWalkTemplates));
-  }
-
-  // Check for existing walks data
   if (!localStorage.getItem('walks')) {
-    const sampleWalks = []; // Initialize with an empty array, walks will be created by the app
-    localStorage.setItem('walks', JSON.stringify(sampleWalks));
+    localStorage.setItem('walks', JSON.stringify([]));
   }
 
-  // Check for existing logs data
   if (!localStorage.getItem('logs')) {
-    const sampleLogs = [
-      {
-        timestamp: new Date().toISOString(),
-        userId: 'system',
-        action: 'INITIALIZE_DATA',
-        details: 'Sample data initialized in localStorage.',
-      },
-    ];
-    localStorage.setItem('logs', JSON.stringify(sampleLogs));
+    localStorage.setItem('logs', JSON.stringify([]));
   }
 }
 
@@ -335,9 +278,6 @@ function addLog(logObject) {
   logs.push(logObject);
   setLogs(logs);
 }
-
-// Initialize data on script load
-initializeData();
 
 // Export functions (optional, depending on how you structure your project,
 // for now, these will be global or you might use a module system later)

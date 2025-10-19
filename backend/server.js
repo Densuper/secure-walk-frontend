@@ -5,6 +5,7 @@ const scanRoutes = require('./routes/scanRoutes'); // Import scan routes
 const userRoutes = require('./routes/userRoutes'); // Import user routes
 const adminUserRoutes = require('./routes/adminUserRoutes'); // Import admin user routes
 const checkpointRoutes = require('./routes/checkpointRoutes'); // Import checkpoint routes
+const checkpointPublicRoutes = require('./routes/checkpointPublicRoutes'); // Import user checkpoint routes
 const walkRoutes = require('./routes/walkRoutes'); // Import walk routes
 const app = express();
 const port = process.env.PORT || 3000;
@@ -24,6 +25,8 @@ app.use('/api/user', userRoutes);
 app.use('/api/admin/users', adminUserRoutes);
 // Mount checkpoint management routes
 app.use('/api/admin/checkpoints', checkpointRoutes);
+// Mount checkpoint read-only routes for authenticated users
+app.use('/api/checkpoints', checkpointPublicRoutes);
 // Mount walk routes
 app.use('/api', walkRoutes);
 

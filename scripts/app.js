@@ -42,6 +42,44 @@ function getCurrentUser() {
  * @param {string} walkTemplateId - The ID of the walk template to use.
  * @returns {object | null} The newly created walk object or null if failed.
  */
+async function fetchAvailableCheckpoints() {
+  const userAuthToken = localStorage.getItem('userAuthToken');
+  const loggingUsername = getCurrentUser()?.username || 'unknown_user';
+
+  if (!userAuthToken) {
+    console.error('User authentication token not found. Cannot load checkpoints.');
+    logEvent(loggingUsername, 'FETCH_CHECKPOINTS_FAIL', 'Auth token not found while fetching checkpoints.');
+    return [];
+  }
+
+  try {
+    const response = await fetch('/api/checkpoints', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${userAuthToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const responseData = await response.json().catch(() => ({}));
+      const errorMsg = responseData.message || response.statusText || 'Unknown error fetching checkpoints.';
+      console.error('Failed to fetch checkpoints from API:', response.status, responseData);
+      logEvent(loggingUsername, 'FETCH_CHECKPOINTS_FAIL', errorMsg);
+      return [];
+    }
+
+    const responseData = await response.json();
+    const checkpoints = Array.isArray(responseData.checkpoints) ? responseData.checkpoints : [];
+    logEvent(loggingUsername, 'FETCH_CHECKPOINTS_SUCCESS', `Loaded ${checkpoints.length} checkpoints from API.`);
+    return checkpoints;
+  } catch (error) {
+    console.error('Network error fetching checkpoints from API:', error);
+    logEvent(loggingUsername, 'FETCH_CHECKPOINTS_FAIL', `Network error: ${error.message}`);
+    return [];
+  }
+}
+
 async function startWalk(userId, walkTemplateId) {
   console.log(`Attempting to start walk for user ${userId} with template ${walkTemplateId} via API.`);
   const userAuthToken = localStorage.getItem('userAuthToken');
@@ -58,18 +96,15 @@ async function startWalk(userId, walkTemplateId) {
     return null;
   }
 
-  // Get checkpoint list from walkTemplateId using existing data.js function
-  // This is permissible for now as per instructions.
-  const templates = getWalkTemplates(); // from data.js
-  const template = templates.find(t => t.id === walkTemplateId);
+  const checkpoints = await fetchAvailableCheckpoints();
+  const checkpointQrIdentifiersArray = checkpoints.map(cp => cp.qr_code_identifier).filter(Boolean);
 
-  if (!template) {
-    const errorMsg = `Walk template ${walkTemplateId} not found locally. Cannot determine checkpoints.`;
+  if (checkpointQrIdentifiersArray.length === 0) {
+    const errorMsg = 'No checkpoints available from API to include in the walk.';
     console.error(errorMsg);
     logEvent(userId, 'START_WALK_FAIL_API', errorMsg);
     return null;
   }
-  const checkpointQrIdentifiersArray = template.checkpoints; // e.g., ['CP001', 'CP002']
 
   try {
     const response = await fetch('/api/walk/start', {
@@ -354,32 +389,38 @@ async function updateCheckpointStatus(walkId, checkpointId, scannedAtTimestamp) 
  * @param {Array} [walksArray] - Optional: pass array of walks to avoid re-fetching (e.g., if called internally).
  * @returns {number} The walk progress percentage (0-100).
  */
-function calculateWalkProgress(walkId, walksArray = null) {
-  const currentWalks = walksArray || getWalks(); // Use provided array or fetch from data.js
-  const walk = currentWalks.find(w => w.id === walkId);
+function calculateWalkProgress(walkOrWalkId, walksArray = null) {
+  let checkpoints = [];
 
-  if (!walk) {
-    console.warn(`calculateWalkProgress: Walk with ID ${walkId} not found.`);
+  if (Array.isArray(walkOrWalkId)) {
+    checkpoints = walkOrWalkId;
+  } else if (walkOrWalkId && typeof walkOrWalkId === 'object') {
+    if (Array.isArray(walkOrWalkId.checkpoints)) {
+      checkpoints = walkOrWalkId.checkpoints;
+    } else if (Array.isArray(walkOrWalkId.checkpointScans)) {
+      checkpoints = walkOrWalkId.checkpointScans;
+    }
+  } else {
+    const currentWalks = walksArray || getWalks();
+    const walk = currentWalks.find(w => w.id === walkOrWalkId);
+    if (walk) {
+      checkpoints = walk.checkpoints || walk.checkpointScans || [];
+    } else {
+      console.warn(`calculateWalkProgress: Walk with ID ${walkOrWalkId} not found.`);
+      return 0;
+    }
+  }
+
+  if (!Array.isArray(checkpoints) || checkpoints.length === 0) {
     return 0;
   }
 
-  if (!walk.checkpointScans || walk.checkpointScans.length === 0) {
-    console.log(`calculateWalkProgress: Walk ${walkId} has no checkpoints.`);
-    return 0; // No checkpoints, so 0% progress
-  }
+  const scannedCheckpoints = checkpoints.filter(cp => {
+    const status = cp.status || cp.checkpointStatus;
+    return typeof status === 'string' && status.toLowerCase() === 'scanned';
+  }).length;
 
-  const totalCheckpoints = walk.checkpointScans.length;
-  const scannedCheckpoints = walk.checkpointScans.filter(
-    cs => cs.status === 'scanned'
-  ).length;
-
-  if (totalCheckpoints === 0) { // Should be caught by the above, but good for safety
-    return 0;
-  }
-
-  const progress = (scannedCheckpoints / totalCheckpoints) * 100;
-  // console.log(`Progress for walk ${walkId}: ${scannedCheckpoints}/${totalCheckpoints} = ${progress}%`);
-  return Math.round(progress);
+  return Math.round((scannedCheckpoints / checkpoints.length) * 100);
 }
 
 /**
