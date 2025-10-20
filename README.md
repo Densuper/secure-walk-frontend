@@ -7,13 +7,43 @@ Secure Walkways is a web application designed for managing and tracking security
 *   **Frontend:** HTML, CSS, and vanilla JavaScript. Located primarily in `index.html` and the `pages/` directory.
 *   **Backend:** Node.js with Express.js and SQLite. Located in the `backend/` directory.
 
+## Prerequisites
+
+*   [Node.js](https://nodejs.org/) (v18 or later recommended)
+*   [npm](https://www.npmjs.com/) (bundled with Node.js)
+*   A modern desktop or mobile browser with camera support for QR scanning features
+
+## Installation and Setup
+
+1.  **Clone the repository and install dependencies:**
+    ```bash
+    git clone <repository-url>
+    cd secure-walk-frontend
+    npm install
+    ```
+    Running `npm install` from the repository root installs the shared developer tooling (Jest configuration, linters, etc.).
+
+2.  **Install backend dependencies and configure environment variables:**
+    ```bash
+    cd backend
+    npm install
+    ```
+    Create a `.env` file (or copy from a template if provided) so that `JWT_SECRET` is defined—the backend will refuse to start without it. Optionally set `SEED_DEMO_DATA=true` to load predictable demo users and checkpoints for local development.
+
 ## Running the Application
 
 To run the Secure Walkways application, you need to have both the backend server running and the frontend accessible in a browser.
 
 ### 1. Running the Backend
 
-Follow the instructions in the [backend/README.md](backend/README.md) to set up and start the backend server. By default, it runs on `http://localhost:3000`.
+From the `backend` directory, start the API server:
+
+```bash
+node server.js
+```
+
+The backend listens on `http://localhost:3000` by default. See [backend/README.md](backend/README.md) for deeper details on the av
+ailable environment variables, API endpoints, and tests.
 
 ### 2. Accessing the Frontend
 
