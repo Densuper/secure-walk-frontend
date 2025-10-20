@@ -2,172 +2,56 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b152d">
   <title>QR Code Management</title>
-  <style>
-    /* Base styles */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 25px;
-      border-radius: 10px;
-      transition: background-color 0.3s, box-shadow 0.3s;
-    }
-    h1 { text-align: center; margin-bottom: 10px; }
-    .admin-welcome { text-align: center; font-size: 1.1em; margin-bottom: 25px; }
-    #qrCodeListContainer { margin-top: 20px; }
-    .qr-code-entry {
-      padding: 15px;
-      margin-bottom: 12px;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: background-color 0.3s, border-left-color 0.3s;
-    }
-    .qr-code-entry .info { flex-grow: 1; }
-    .qr-code-entry .info span { display: block; margin-bottom: 3px; }
-    .qr-code-entry .actions button {
-      margin-left: 8px;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.2s ease, color 0.2s ease;
-    }
-    #qrCodeFormWrapper {
-      padding: 20px;
-      border-radius: 8px;
-      margin-top: 20px;
-      transition: background-color 0.3s, border-color 0.3s;
-    }
-    #qrCodeFormWrapper h2 { margin-top: 0; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-    .form-group input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      box-sizing: border-box;
-      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
-    }
-    .form-buttons button {
-      padding: 10px 15px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-right: 10px;
-      font-weight: bold;
-    }
-    .action-button { /* For "Add New QR Code" */
-      padding: 10px 15px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      display: block;
-      margin: 20px auto 0;
-      font-weight: bold;
-    }
-    .back-btn {
-      display: inline-block;
-      margin-top: 25px;
-      text-decoration: none;
-      font-weight: bold;
-      padding: 8px 12px;
-      border-radius: 6px;
-      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-    }
-
-    /* Light Mode */
-    body.light-mode { background-color: #f4f7f6; color: #333; }
-    .light-mode .container { background-color: #fff; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
-    .light-mode h1 { color: #333; }
-    .light-mode .admin-welcome { color: #555; }
-    .light-mode .qr-code-entry { background: #e9ecef; border-left: 5px solid #007bff; color: #333; }
-    .light-mode .qr-code-entry .info strong { color: #0056b3; }
-    .light-mode .edit-btn { background-color: #ffc107; color: #212529; }
-    .light-mode .edit-btn:hover { background-color: #e0a800; }
-    .light-mode .delete-btn { background-color: #dc3545; color: white; }
-    .light-mode .delete-btn:hover { background-color: #c82333; }
-    .light-mode #qrCodeFormWrapper { background-color: #f8f9fa; border: 1px solid #dee2e6; }
-    .light-mode #qrCodeFormWrapper h2 { color: #495057; }
-    .light-mode .form-group label { color: #333; }
-    .light-mode .form-group input[type="text"] { background-color: #fff; color: #495057; border: 1px solid #ced4da; }
-    .light-mode #saveQrCodeButton { background-color: #28a745; color: white; }
-    .light-mode #cancelFormButton { background-color: #6c757d; color: white; }
-    .light-mode .action-button { background-color: #007bff; color: white; }
-    .light-mode .action-button:hover { background-color: #0056b3; }
-    .light-mode .back-btn { color: #007bff; border: 1px solid #007bff; }
-    .light-mode .back-btn:hover { background-color: #007bff; color: white; }
-
-    /* Dark Mode */
-    body.dark-mode { background-color: #1e1e1e; color: #f0f0f0; }
-    .dark-mode .container { background-color: #2c2c2c; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-    .dark-mode h1 { color: #00acc1; }
-    .dark-mode .admin-welcome { color: #bbb; }
-    .dark-mode .qr-code-entry { background: #3a3a3a; border-left: 5px solid #008cba; color: #f0f0f0; }
-    .dark-mode .qr-code-entry .info strong { color: #79c0d8; }
-    .dark-mode .edit-btn { background-color: #e0a800; color: #212529; }
-    .dark-mode .edit-btn:hover { background-color: #c69500; }
-    .dark-mode .delete-btn { background-color: #c82333; color: white; }
-    .dark-mode .delete-btn:hover { background-color: #a71d2a; }
-    .dark-mode #qrCodeFormWrapper { background-color: #343a40; border: 1px solid #495057; }
-    .dark-mode #qrCodeFormWrapper h2 { color: #f0f0f0; }
-    .dark-mode .form-group label { color: #f0f0f0; }
-    .dark-mode .form-group input[type="text"] { background-color: #495057; color: #f0f0f0; border: 1px solid #6c757d; }
-    .dark-mode #saveQrCodeButton { background-color: #1e7e34; color: white; }
-    .dark-mode #cancelFormButton { background-color: #5a6268; color: white; }
-    .dark-mode .action-button { background-color: #008cba; color: white; }
-    .dark-mode .action-button:hover { background-color: #007da5; }
-    .dark-mode .back-btn { color: #79c0d8; border: 1px solid #79c0d8; }
-    .dark-mode .back-btn:hover { background-color: #79c0d8; color: #2c2c2c; }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../styles/main.css">
 </head>
 <body>
-  <div class="container">
-    <h1>QR Code Management</h1>
-    <p class="admin-welcome" id="adminWelcomeMessage"></p>
+  <main class="container">
+    <header class="section">
+      <h1>QR Code Management</h1>
+      <p class="admin-welcome" id="adminWelcomeMessage"></p>
+    </header>
 
-    <div id="qrCodeListContainer">
+    <div id="qrCodeListContainer" class="section">
       <!-- QR Codes will be dynamically inserted here -->
     </div>
 
-    <button id="showAddQrCodeFormButton" class="action-button">Add New QR Code</button>
+    <button id="showAddQrCodeFormButton" class="action-btn" type="button">Add New QR Code</button>
 
-    <div id="qrCodeFormWrapper" style="display: none;">
+    <section id="qrCodeFormWrapper" class="section" style="display: none;">
       <h2 id="formTitle">Add New QR Code</h2>
-      <form id="qrCodeForm">
+      <form id="qrCodeForm" novalidate>
         <input type="hidden" id="editModeQrId" value="">
         <div class="form-group">
-          <label for="qrId">QR Code ID:</label>
+          <label for="qrId">QR Code ID</label>
           <input type="text" id="qrId" name="qrId" required>
         </div>
         <div class="form-group">
-          <label for="qrName">Name:</label>
+          <label for="qrName">Name</label>
           <input type="text" id="qrName" name="qrName" required>
         </div>
         <div class="form-group">
-          <label for="qrLocation">Location:</label>
+          <label for="qrLocation">Location</label>
           <input type="text" id="qrLocation" name="qrLocation">
         </div>
         <div class="form-buttons">
           <button type="submit" id="saveQrCodeButton">Save QR Code</button>
-          <button type="button" id="cancelFormButton">Cancel</button>
+          <button type="button" id="cancelFormButton" class="secondary">Cancel</button>
         </div>
       </form>
-    </div>
+    </section>
 
-    <div style="text-align: center; margin-top: 20px;">
-        <a href="admin-dashboard.html" class="back-btn">← Back to Admin Dashboard</a>
+    <div class="action-buttons">
+      <a href="admin-dashboard.html" class="back-btn secondary">← Back to Admin Dashboard</a>
     </div>
-  </div>
+  </main>
 
   <script src="../scripts/data.js"></script>
   <script src="../scripts/app.js"></script>
@@ -177,11 +61,11 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       if (typeof initializeData === 'function') initializeData();
-      
+
       currentAdminUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
 
       if (!currentAdminUser || currentAdminUser.role !== 'admin') {
-        alert("Access Denied. You must be an admin to manage QR codes.");
+        alert('Access Denied. You must be an admin to manage QR codes.');
         window.location.href = 'admin-login.html';
         return;
       }
@@ -197,11 +81,11 @@
 
     function renderQrCodeList() {
       const qrCodeListContainer = document.getElementById('qrCodeListContainer');
-      qrCodeListContainer.innerHTML = ''; // Clear existing list
-      const qrCodes = getQrCodes(); // From data.js
+      qrCodeListContainer.innerHTML = '';
+      const qrCodes = getQrCodes();
 
       if (qrCodes.length === 0) {
-        qrCodeListContainer.innerHTML = '<p>No QR codes found. Add one to get started!</p>';
+        qrCodeListContainer.innerHTML = '<p class="muted">No QR codes found.</p>';
         return;
       }
 
@@ -215,8 +99,8 @@
             <span><strong>Location:</strong> ${qr.location || 'N/A'}</span>
           </div>
           <div class="actions">
-            <button class="edit-btn" data-qrid="${qr.id}">Edit</button>
-            <button class="delete-btn" data-qrid="${qr.id}">Delete</button>
+            <button class="edit-btn secondary" data-qr-id="${qr.id}">Edit</button>
+            <button class="delete-btn danger" data-qr-id="${qr.id}">Delete</button>
           </div>
         `;
         qrCodeListContainer.appendChild(qrDiv);
@@ -235,19 +119,19 @@
       const qrCodes = getQrCodes();
       const qrToEdit = qrCodes.find(qr => qr.id === qrId);
       if (!qrToEdit) {
-        alert('QR Code not found for editing.');
+        alert('QR code not found for editing.');
         return;
       }
 
       document.getElementById('formTitle').textContent = 'Edit QR Code';
       document.getElementById('qrCodeForm').reset();
       document.getElementById('editModeQrId').value = qrToEdit.id;
-      
+
       const qrIdInput = document.getElementById('qrId');
       qrIdInput.value = qrToEdit.id;
-      qrIdInput.disabled = true; // QR ID should not be editable
+      qrIdInput.disabled = true;
 
-      document.getElementById('qrName').value = qrToEdit.name;
+      document.getElementById('qrName').value = qrToEdit.name || '';
       document.getElementById('qrLocation').value = qrToEdit.location || '';
       document.getElementById('qrCodeFormWrapper').style.display = 'block';
     }
@@ -260,61 +144,52 @@
 
     function handleQrCodeFormSubmit(event) {
       event.preventDefault();
-      const id = document.getElementById('qrId').value.trim();
-      const name = document.getElementById('qrName').value.trim();
-      const location = document.getElementById('qrLocation').value.trim();
+
+      const qrId = document.getElementById('qrId').value.trim();
+      const qrName = document.getElementById('qrName').value.trim();
+      const qrLocation = document.getElementById('qrLocation').value.trim();
       const editModeQrId = document.getElementById('editModeQrId').value;
 
-      if (!id || !name) { // Location is optional
+      if (!qrId || !qrName) {
         alert('QR Code ID and Name are required.');
         return;
       }
 
-      if (editModeQrId) { // Editing existing QR Code
-        const updatedData = { name, location };
-        const result = updateQrCode(editModeQrId, updatedData); // from data.js
+      if (editModeQrId) {
+        const updatedData = { name: qrName, location: qrLocation };
+        const result = updateQrCode(editModeQrId, updatedData);
         if (result.success) {
-          logEvent(currentAdminUser.username, 'QR_CODE_UPDATED', { qrCodeId: editModeQrId, changes: updatedData });
+          logEvent(currentAdminUser.username, 'QR_UPDATED', { updatedQrCode: editModeQrId, changes: updatedData });
           alert(`QR Code '${editModeQrId}' updated successfully.`);
         } else {
           alert(`Error updating QR Code: ${result.message}`);
         }
-      } else { // Adding new QR Code
-        const newQrCode = { id, name, location };
-        const result = addQrCode(newQrCode); // from data.js
+      } else {
+        const newQrCode = { id: qrId, name: qrName, location: qrLocation };
+        const result = addQrCode(newQrCode);
         if (result.success) {
-          logEvent(currentAdminUser.username, 'QR_CODE_CREATED', { qrCodeId: id, name: name });
-          alert(`QR Code '${id}' added successfully.`);
+          logEvent(currentAdminUser.username, 'QR_CREATED', { qrId, name: qrName });
+          alert(`QR Code '${qrId}' added successfully.`);
         } else {
           alert(`Error adding QR Code: ${result.message}`);
         }
       }
+
       renderQrCodeList();
       hideQrCodeForm();
     }
 
     function handleQrCodeListActions(event) {
       const target = event.target;
-      const qrId = target.dataset.qrid;
-
-      if (!qrId) return; // Clicked on something else
+      const qrId = target.dataset.qrId;
 
       if (target.classList.contains('edit-btn')) {
         showEditForm(qrId);
       } else if (target.classList.contains('delete-btn')) {
-        // Check if QR code is used in any walk templates
-        const walkTemplates = getWalkTemplates();
-        const isQrCodeUsed = walkTemplates.some(template => template.checkpoints.includes(qrId));
-
-        if (isQrCodeUsed) {
-          alert(`Error: QR Code '${qrId}' is currently used in one or more walk templates. Please remove it from templates before deleting.`);
-          return;
-        }
-
         if (confirm(`Are you sure you want to delete QR Code '${qrId}'? This action cannot be undone.`)) {
-          const result = deleteQrCode(qrId); // from data.js
+          const result = deleteQrCode(qrId);
           if (result.success) {
-            logEvent(currentAdminUser.username, 'QR_CODE_DELETED', { qrCodeId: qrId });
+            logEvent(currentAdminUser.username, 'QR_DELETED', { deletedQrCode: qrId });
             alert(`QR Code '${qrId}' deleted successfully.`);
             renderQrCodeList();
           } else {

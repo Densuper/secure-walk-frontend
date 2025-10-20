@@ -2,154 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b152d">
   <title>Walk History</title>
-  <style>
-    /* Base styles */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      padding: 25px;
-      border-radius: 10px;
-      transition: background-color 0.3s, box-shadow 0.3s;
-    }
-    h1 { /* Standardized to h1 from previous observation */
-      text-align: center;
-      font-size: 2em;
-      margin-bottom: 25px;
-      transition: color 0.3s;
-    }
-    .walk-entry {
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-      transition: background-color 0.3s, border-left-color 0.3s, color 0.3s;
-    }
-    .walk-entry p {
-      margin: 5px 0;
-      font-size: 0.95em;
-    }
-    .walk-entry button {
-      padding: 8px 12px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.2s, color 0.2s;
-      margin-top: 5px;
-    }
-    /* Existing .back-btn from HTML, ensure it's styled for themes */
-    .back-btn {
-      display: block;
-      text-align: center;
-      margin-top: 30px;
-      padding: 10px 15px;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-      transition: background-color 0.2s, color 0.2s, border-color 0.2s ease;
-    }
-
-    /* Light Mode (based on original, slightly enhanced) */
-    body.light-mode {
-      background-color: #f4f7f6;
-      color: #333;
-    }
-    .light-mode .container {
-      background-color: #fff;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    }
-    .light-mode h1 {
-      color: #333;
-    }
-    .light-mode .walk-entry {
-      background: #e9ecef;
-      color: #333;
-      border-left: 4px solid #007bff; /* Blue accent */
-    }
-    .light-mode .walk-entry p strong { color: #0056b3; }
-    .light-mode .walk-entry button {
-      background-color: #007bff;
-      color: white;
-    }
-    .light-mode .walk-entry button:hover {
-      background-color: #0056b3;
-    }
-    .light-mode .back-btn {
-        background-color: #6c757d; /* Consistent with other back buttons in light mode */
-        color: white;
-        border: 1px solid transparent;
-    }
-    .light-mode .back-btn:hover { background-color: #5a6268; }
-
-
-    /* Dark Mode */
-    body.dark-mode {
-      background-color: #1a1a1a; /* Consistent dark bg */
-      color: #e0e0e0;
-    }
-    .dark-mode .container {
-      background-color: #2c2c2c; /* Consistent dark container bg */
-      box-shadow: 0 0 15px rgba(0,0,0,0.5);
-    }
-    .dark-mode h1 {
-      color: #00acc1; /* Consistent dark mode accent */
-    }
-    .dark-mode .walk-entry {
-      background: #3a3a3a;
-      color: #e0e0e0;
-      border-left: 4px solid #008cba; /* Consistent dark mode accent */
-    }
-    .dark-mode .walk-entry p strong { color: #79c0d8; }
-    .dark-mode .walk-entry button {
-      background-color: #008cba;
-      color: white;
-    }
-    .dark-mode .walk-entry button:hover {
-      background-color: #007da5;
-    }
-    .dark-mode .back-btn {
-        background-color: #5a6268; /* Consistent with other back buttons in dark mode */
-        color: #f0f0f0;
-        border: 1px solid transparent;
-    }
-    .dark-mode .back-btn:hover { background-color: #495057; }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../styles/main.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Walk History</h1> <!-- Title was h1, which is good -->
+  <main class="container">
+    <header class="section">
+      <h1>Walk History</h1>
+      <p class="subtitle">Recent patrols completed by your team.</p>
+    </header>
 
-    <!-- Example walk entries (structure matches what render function would create) -->
-    <div class="walk-entry">
-      <p><strong>Date:</strong> May 18, 2025</p>
-      <p><strong>Time:</strong> 07:30 AM</p>
-      <p><strong>Status:</strong> Completed</p>
-      <!-- The button style will be applied by .walk-entry button -->
-      <button onclick="viewDetails('walk1')">View Details</button>
-    </div>
+    <section class="section">
+      <div class="walk-entry">
+        <p><strong>Date:</strong> May 18, 2025</p>
+        <p><strong>Time:</strong> 07:30 AM</p>
+        <p><strong>Status:</strong> Completed</p>
+        <button class="action-button" onclick="viewDetails('walk1')">View Details</button>
+      </div>
 
-    <div class="walk-entry">
-      <p><strong>Date:</strong> May 17, 2025</p>
-      <p><strong>Time:</strong> 02:00 PM</p>
-      <p><strong>Status:</strong> Incomplete</p>
-      <button onclick="viewDetails('walk2')">View Details</button>
-    </div>
-    <!-- The original back button was an <a> tag, it will be styled by .back-btn -->
-    <a href="user-dashboard.html" class="back-btn">Back to Dashboard</a> 
-  </div>
+      <div class="walk-entry">
+        <p><strong>Date:</strong> May 17, 2025</p>
+        <p><strong>Time:</strong> 02:00 PM</p>
+        <p><strong>Status:</strong> Incomplete</p>
+        <button class="action-button" onclick="viewDetails('walk2')">View Details</button>
+      </div>
+
+      <a href="user-dashboard.html" class="back-btn secondary">Back to Dashboard</a>
+    </section>
+  </main>
 
   <script>
     function viewDetails(walkId) {
-      // This page is static, so this function just redirects.
-      // For dynamic behavior, this page would need more JS like admin-walk-history.
-      window.location.href = "walk-details.html"; // Ideally, pass walkId: `walk-details.html?walkId=${walkId}`
+      window.location.href = `walk-details.html?walkId=${walkId}`;
     }
   </script>
   <script src="../scripts/theme.js" defer></script>

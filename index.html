@@ -1,70 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b152d">
   <title>Secure Walkways</title>
-  <style>
-    /* Base styles */
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding-top: 100px;
-      margin: 0; /* Added to ensure no default margin */
-      transition: background-color 0.3s, color 0.3s;
-    }
-    h1 {
-      font-size: 36px;
-      margin-bottom: 50px;
-    }
-    .login-button {
-      display: block;
-      width: 200px;
-      padding: 15px;
-      margin: 20px auto;
-      font-size: 18px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    /* Dark Mode (current default) */
-    body.dark-mode {
-      background-color: #1f1f1f;
-      color: white;
-    }
-    .dark-mode h1 {
-      /* color: white; /* Already inherited */
-    }
-    .dark-mode .login-button {
-      background-color: #0077ff;
-      color: white;
-    }
-    .dark-mode .login-button:hover {
-      background-color: #005dcc;
-    }
-
-    /* Light Mode */
-    body.light-mode {
-      background-color: #f0f2f5; /* Light grey background */
-      color: #333; /* Dark text */
-    }
-    .light-mode h1 {
-      color: #333;
-    }
-    .light-mode .login-button {
-      background-color: #007bff; /* Standard blue */
-      color: white;
-    }
-    .light-mode .login-button:hover {
-      background-color: #0056b3; /* Darker blue */
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="styles/main.css">
 </head>
-<body>
-  <h1>Secure Walkways</h1>
-  <button class="login-button" onclick="location.href='pages/user-login.html'">User Login</button>
-  <button class="login-button" onclick="location.href='pages/admin-login.html'">Admin Login</button>
+<body class="landing-page">
+  <main>
+    <h1>Secure Walkways</h1>
+    <p class="subtitle">Coordinated patrols, QR accountability, and live reporting engineered for campus safety teams.</p>
+    <div class="landing-actions">
+      <button class="login-button" onclick="location.href='pages/user-login.html'">User Login</button>
+      <button class="login-button" onclick="location.href='pages/admin-login.html'">Admin Login</button>
+    </div>
+  </main>
 
   <script src="scripts/theme.js" defer></script>
 </body>

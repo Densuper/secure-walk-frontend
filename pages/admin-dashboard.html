@@ -2,143 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b152d">
   <title>Admin Dashboard</title>
-  <style>
-    /* Base styles */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    .dashboard {
-      max-width: 800px;
-      margin: auto;
-    }
-    .dashboard h1 { /* For the main "Admin Dashboard" title */
-      text-align: center;
-    }
-    .dashboard p { /* For the welcome message */
-      text-align: center;
-      font-size: 1.1em;
-    }
-    .card {
-      padding: 20px;
-      margin: 15px 0;
-      border-radius: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: background-color 0.3s, box-shadow 0.3s;
-    }
-    .card h2 {
-      margin: 0;
-      font-size: 20px;
-    }
-    /* Default button style (can be overridden by specific IDs or classes) */
-    button, .card button {
-      padding: 8px 14px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.2s;
-    }
-
-    /* Light Mode specific styles */
-    body.light-mode {
-      background-color: #f5f5f5;
-      color: #333;
-    }
-    .light-mode .dashboard h1 {
-      color: #333;
-    }
-    .light-mode .dashboard p { /* Welcome message */
-        color: #555;
-    }
-    .light-mode .card {
-      background-color: #fff;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      color: #333; /* Text color for card content */
-    }
-    .light-mode .card h2 {
-        color: #333; /* Ensure card titles are dark in light mode */
-    }
-    .light-mode .card button { /* Default card buttons */
-      background-color: #007bff; /* Blue */
-      color: white;
-    }
-    .light-mode .card button:hover {
-      background-color: #0056b3;
-    }
-    .light-mode #adminLogoutButton { /* Specific styling for logout button */
-      background-color: #6c757d; /* Grey */
-      color: white;
-    }
-    .light-mode #adminLogoutButton:hover {
-      background-color: #5a6268;
-    }
-
-    /* Dark Mode specific styles */
-    body.dark-mode {
-      background-color: #1e1e1e;
-      color: #f0f0f0;
-    }
-    .dark-mode .dashboard h1 {
-      color: #00acc1; /* Cyan accent for dark mode title */
-    }
-    .dark-mode .dashboard p { /* Welcome message */
-        color: #bbb;
-    }
-    .dark-mode .card {
-      background-color: #2c2c2c; /* Darker card background */
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4); /* More pronounced shadow for dark mode */
-      color: #f0f0f0; /* Light text for card content */
-    }
-    .dark-mode .card h2 {
-        color: #e0e0e0; /* Lighter card titles */
-    }
-    .dark-mode .card button { /* Default card buttons */
-      background-color: #008cba; /* Slightly different blue for dark mode */
-      color: white;
-    }
-    .dark-mode .card button:hover {
-      background-color: #007da5;
-    }
-    .dark-mode #adminLogoutButton { /* Specific styling for logout button */
-      background-color: #4f5b62; /* Darker grey */
-      color: #f0f0f0;
-    }
-    .dark-mode #adminLogoutButton:hover {
-      background-color: #40494f;
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../styles/main.css">
 </head>
 <body>
-  <div class="dashboard">
-    <h1>Admin Dashboard</h1>
+  <main class="dashboard">
+    <header>
+      <h1>Admin Dashboard</h1>
+      <p id="adminWelcomeMessage" class="admin-welcome"></p>
+    </header>
 
-    <div class="card">
-      <h2>User Management</h2>
-      <button onclick="navigate('user-management.html')">Manage</button>
+    <div class="card-grid">
+      <div class="card section">
+        <div>
+          <h2>User Management</h2>
+          <p class="muted">Add, update, or remove patrol officers and administrators.</p>
+        </div>
+        <button onclick="navigate('user-management.html')">Manage</button>
+      </div>
+
+      <div class="card section">
+        <div>
+          <h2>Walk History</h2>
+          <p class="muted">Review completed patrols, checkpoints, and time-on-task.</p>
+        </div>
+        <button onclick="navigate('admin-walk-history.html')">View</button>
+      </div>
+
+      <div class="card section">
+        <div>
+          <h2>QR Code Management</h2>
+          <p class="muted">Maintain the checkpoint inventory and update QR metadata.</p>
+        </div>
+        <button onclick="navigate('qr-management.html')">Open</button>
+      </div>
+
+      <div class="card section">
+        <div>
+          <h2>Reports &amp; Logs</h2>
+          <p class="muted">Download audit trails and operational logs for compliance.</p>
+        </div>
+        <button onclick="navigate('logs.html')">Access</button>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>Walk History</h2>
-      <button onclick="navigate('admin-walk-history.html')">View</button>
+    <div class="action-buttons">
+      <button id="adminLogoutButton" class="secondary">Logout</button>
     </div>
-
-    <div class="card">
-      <h2>QR Code Management</h2>
-      <button onclick="navigate('qr-management.html')">Open</button>
-    </div>
-
-    <div class="card">
-      <h2>Reports & Logs</h2>
-      <button onclick="navigate('logs.html')">Access</button>
-    </div>
-  </div>
+  </main>
 
   <script>
     function navigate(url) {
@@ -146,50 +64,34 @@
     }
   </script>
 
-  <!-- Added Logout Button and Scripts -->
-  <div style="text-align: center; margin-top: 30px;">
-    <button id="adminLogoutButton">Logout</button> <!-- Inline styles removed -->
-  </div>
-
   <script src="../scripts/data.js"></script>
   <script src="../scripts/app.js"></script>
   <script src="../scripts/theme.js" defer></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', () => {
       if (typeof initializeData === 'function') {
-        initializeData(); // Ensure data is initialized if needed by other scripts or linked pages
-      } else {
-        console.error("initializeData function not found. Ensure data.js is loaded.");
+        initializeData();
       }
 
       const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
 
       if (!currentUser || currentUser.role !== 'admin') {
-        alert("Access Denied. You are not authorized to view this page. Redirecting to login.");
-        window.location.href = 'admin-login.html'; // Redirect to admin login
-      } else {
-        // Display welcome message for the admin
-        const h1Element = document.querySelector('.dashboard h1');
-        if (h1Element) {
-          const welcomeEl = document.createElement('p');
-          welcomeEl.textContent = `Welcome, Admin ${currentUser.username}!`;
-          welcomeEl.style.textAlign = 'center';
-          welcomeEl.style.fontSize = '1.1em';
-          welcomeEl.style.color = '#555';
-          h1Element.insertAdjacentElement('afterend', welcomeEl);
-        }
-        console.log(`Admin user ${currentUser.username} authenticated.`);
+        alert('Access Denied. You are not authorized to view this page. Redirecting to login.');
+        window.location.href = 'admin-login.html';
+        return;
+      }
+
+      const welcomeElement = document.getElementById('adminWelcomeMessage');
+      if (welcomeElement) {
+        welcomeElement.textContent = `Welcome, Admin ${currentUser.username}!`;
       }
 
       const logoutButton = document.getElementById('adminLogoutButton');
       if (logoutButton) {
-        logoutButton.addEventListener('click', function() {
+        logoutButton.addEventListener('click', () => {
           if (typeof logoutUser === 'function') {
-            logoutUser(); // This function from app.js handles logging and redirection
+            logoutUser();
           } else {
-            console.error("logoutUser function not found. Ensure app.js is loaded.");
-            alert("Logout failed. Function not available.");
-            // Fallback logout
             localStorage.removeItem('currentUser');
             window.location.href = '../index.html';
           }
