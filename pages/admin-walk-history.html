@@ -2,96 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b152d">
   <title>Admin Walk History</title>
-  <style>
-    /* Base styles */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 25px;
-      border-radius: 10px;
-      transition: background-color 0.3s, box-shadow 0.3s;
-    }
-    h1 { text-align: center; font-size: 2em; margin-bottom: 10px; }
-    .admin-welcome { text-align: center; font-size: 1.1em; margin-bottom: 25px; }
-    .walk-entry {
-      padding: 18px;
-      margin-bottom: 18px;
-      border-radius: 8px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      transition: background-color 0.3s, border-left-color 0.3s;
-    }
-    .walk-entry .info { flex: 1 1 300px; padding-right: 15px; }
-    .walk-entry p { margin: 6px 0; font-size: 0.95em; }
-    .walk-entry .action-button {
-      padding: 10px 15px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      text-decoration: none;
-      font-size: 0.9em;
-      font-weight: bold;
-      transition: background-color 0.2s ease;
-      flex-shrink: 0;
-    }
-    .back-btn-container { text-align: center; margin-top: 30px; }
-    .back-btn {
-      display: inline-block;
-      text-decoration: none;
-      font-weight: bold;
-      padding: 10px 15px;
-      border-radius: 6px;
-      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-    }
-
-    /* Light Mode */
-    body.light-mode { background-color: #f4f7f6; color: #333; }
-    .light-mode .container { background-color: #fff; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
-    .light-mode h1 { color: #333; }
-    .light-mode .admin-welcome { color: #555; }
-    .light-mode .walk-entry { background: #e9ecef; border-left: 5px solid #17a2b8; color: #333; }
-    .light-mode .walk-entry p strong { color: #0056b3; }
-    .light-mode .walk-entry .action-button { background-color: #007bff; color: white; }
-    .light-mode .walk-entry .action-button:hover { background-color: #0056b3; }
-    .light-mode .back-btn { color: #007bff; border: 1px solid #007bff; }
-    .light-mode .back-btn:hover { background-color: #007bff; color: white; }
-
-    /* Dark Mode */
-    body.dark-mode { background-color: #1e1e1e; color: #f0f0f0; }
-    .dark-mode .container { background-color: #2c2c2c; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-    .dark-mode h1 { color: #00acc1; }
-    .dark-mode .admin-welcome { color: #bbb; }
-    .dark-mode .walk-entry { background: #3a3a3a; border-left: 5px solid #008cba; color: #f0f0f0; }
-    .dark-mode .walk-entry p strong { color: #79c0d8; }
-    .dark-mode .walk-entry .action-button { background-color: #008cba; color: white; }
-    .dark-mode .walk-entry .action-button:hover { background-color: #007da5; }
-    .dark-mode .back-btn { color: #79c0d8; border: 1px solid #79c0d8; }
-    .dark-mode .back-btn:hover { background-color: #79c0d8; color: #2c2c2c; }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../styles/main.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Admin Walk History</h1>
-    <p class="admin-welcome" id="adminWelcomeMessage"></p>
+  <main class="container">
+    <header class="section">
+      <h1>Admin Walk History</h1>
+      <p class="admin-welcome" id="adminWelcomeMessage"></p>
+    </header>
 
-    <div id="walkHistoryContainer">
-      <!-- Walk entries will be dynamically inserted here -->
+    <div id="walkHistoryContainer" class="section">
+      <!-- Walk entries inserted dynamically -->
     </div>
 
-    <div class="back-btn-container">
-        <a href="admin-dashboard.html" class="back-btn">← Back to Admin Dashboard</a>
+    <div class="action-buttons">
+      <a href="admin-dashboard.html" class="back-btn secondary">← Back to Admin Dashboard</a>
     </div>
-  </div>
+  </main>
 
   <script src="../scripts/data.js"></script>
   <script src="../scripts/app.js"></script>
@@ -101,11 +36,11 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       if (typeof initializeData === 'function') initializeData();
-      
+
       currentAdminUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
 
       if (!currentAdminUser || currentAdminUser.role !== 'admin') {
-        alert("Access Denied. You must be an admin to view this page.");
+        alert('Access Denied. You must be an admin to view this page.');
         window.location.href = 'admin-login.html';
         return;
       }
@@ -116,29 +51,28 @@
 
     function renderWalkHistory() {
       const walkHistoryContainer = document.getElementById('walkHistoryContainer');
-      walkHistoryContainer.innerHTML = ''; // Clear static or old entries
+      walkHistoryContainer.innerHTML = '';
 
-      const allWalks = getWalks(); // From data.js
-      const allUsers = getUsers(); // From data.js
+      const allWalks = getWalks();
+      const allUsers = getUsers();
 
       if (allWalks.length === 0) {
-        walkHistoryContainer.innerHTML = '<p>No walk history found.</p>';
+        walkHistoryContainer.innerHTML = '<p class="muted">No walk history found.</p>';
         return;
       }
-      
-      // Sort walks by start time, newest first
+
       allWalks.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
 
       allWalks.forEach(walk => {
         const user = allUsers.find(u => u.username === walk.userId);
         const userName = user ? user.username : (walk.userId || 'Unknown User');
-        
+
         const walkDate = new Date(walk.startTime).toLocaleDateString();
         const walkTime = new Date(walk.startTime).toLocaleTimeString();
 
         const walkEntryDiv = document.createElement('div');
         walkEntryDiv.className = 'walk-entry';
-        
+
         walkEntryDiv.innerHTML = `
           <div class="info">
             <p><strong>User:</strong> ${userName}</p>

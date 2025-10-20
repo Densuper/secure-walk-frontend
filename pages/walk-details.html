@@ -2,140 +2,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b152d">
   <title>Walk Details</title>
-  <style>
-    /* Base styles */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-      padding: 25px;
-      border-radius: 10px;
-      transition: background-color 0.3s, box-shadow 0.3s;
-    }
-    h1 { text-align: center; font-size: 2em; margin-bottom: 10px; }
-    .admin-welcome { text-align: center; font-size: 1.1em; margin-bottom: 25px; }
-    .section-title { margin-top: 25px; margin-bottom: 15px; padding-bottom: 8px; transition: color 0.3s, border-bottom-color 0.3s; }
-    .walk-summary p, .checkpoint-entry p { margin: 8px 0; font-size: 1em; line-height: 1.6; }
-    .walk-summary p strong, .checkpoint-entry p strong { min-width: 120px; display: inline-block; transition: color 0.3s; }
-    .checkpoints-list { list-style: none; padding: 0; }
-    .checkpoint-entry {
-      padding: 12px 15px;
-      margin-bottom: 10px;
-      border-radius: 6px;
-      transition: background-color 0.3s, border-left-color 0.3s;
-    }
-    .status-scanned, .status-pending, .status-missed, .status-cancelled_walk { font-weight: bold; }
-    .back-button {
-      display: inline-block;
-      margin-top: 25px;
-      padding: 10px 18px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      text-decoration: none;
-      font-size: 1em;
-      font-weight: bold;
-      transition: background-color 0.2s ease, color 0.2s ease;
-    }
-    .error-message { text-align: center; font-size: 1.2em; }
-
-    /* Light Mode */
-    body.light-mode { background-color: #f4f7f6; color: #333; }
-    .light-mode .container { background-color: #fff; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
-    .light-mode h1 { color: #333; }
-    .light-mode .admin-welcome { color: #555; }
-    .light-mode .section-title { color: #0056b3; border-bottom: 2px solid #0056b3; }
-    .light-mode .walk-summary p strong, .light-mode .checkpoint-entry p strong { color: #004085; }
-    .light-mode .checkpoint-entry { background-color: #e9ecef; border-left: 4px solid #17a2b8; color: #333; }
-    .light-mode .status-scanned { color: #28a745; }
-    .light-mode .status-pending { color: #ffc107; }
-    .light-mode .status-missed { color: #dc3545; }
-    .light-mode .status-cancelled_walk { color: #6c757d; }
-    .light-mode .back-button { background-color: #6c757d; color: white; }
-    .light-mode .back-button:hover { background-color: #5a6268; }
-    .light-mode .error-message { color: #dc3545; }
-
-    /* Dark Mode */
-    body.dark-mode { background-color: #1e1e1e; color: #f0f0f0; }
-    .dark-mode .container { background-color: #2c2c2c; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-    .dark-mode h1 { color: #00acc1; }
-    .dark-mode .admin-welcome { color: #bbb; }
-    .dark-mode .section-title { color: #79c0d8; border-bottom: 2px solid #79c0d8; }
-    .dark-mode .walk-summary p strong, .dark-mode .checkpoint-entry p strong { color: #9ecae1; }
-    .dark-mode .checkpoint-entry { background-color: #3a3a3a; border-left: 4px solid #008cba; color: #f0f0f0; }
-    .dark-mode .status-scanned { color: #38c172; } /* Lighter green */
-    .dark-mode .status-pending { color: #f39c12; } /* Lighter orange */
-    .dark-mode .status-missed { color: #e74c3c; }  /* Lighter red */
-    .dark-mode .status-cancelled_walk { color: #95a5a6; } /* Lighter grey */
-    .dark-mode .back-button { background-color: #5a6268; color: #f0f0f0; }
-    .dark-mode .back-button:hover { background-color: #495057; }
-    .dark-mode .error-message { color: #e74c3c; }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../styles/main.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Walk Details</h1>
-    <p class="admin-welcome" id="adminWelcomeMessage"></p>
+  <main class="container">
+    <header class="section">
+      <h1>Walk Details</h1>
+      <p class="admin-welcome" id="adminWelcomeMessage"></p>
+    </header>
 
-    <div id="walkDetailsContainer">
-        <!-- Walk Summary Section -->
-        <div class="walk-summary" id="walkSummarySection">
-            <h2 class="section-title">Summary</h2>
-            <p><strong>Walk ID:</strong> <span id="detailWalkId">N/A</span></p>
-            <p><strong>User:</strong> <span id="detailUser">N/A</span></p>
-            <p><strong>Date:</strong> <span id="detailDate">N/A</span></p>
-            <p><strong>Start Time:</strong> <span id="detailStartTime">N/A</span></p>
-            <p><strong>End Time:</strong> <span id="detailEndTime">N/A</span></p>
-            <p><strong>Status:</strong> <span id="detailStatus">N/A</span></p>
-            <p><strong>Total Time:</strong> <span id="detailTotalTime">N/A</span></p>
-            <p id="detailNotesP" style="display:none;"><strong>Notes:</strong> <span id="detailNotes">N/A</span></p>
-        </div>
+    <section class="section" id="walkDetailsContainer">
+      <div class="walk-summary" id="walkSummarySection">
+        <h2 class="section-title">Summary</h2>
+        <p><strong>Walk ID:</strong> <span id="detailWalkId">N/A</span></p>
+        <p><strong>User:</strong> <span id="detailUser">N/A</span></p>
+        <p><strong>Date:</strong> <span id="detailDate">N/A</span></p>
+        <p><strong>Start Time:</strong> <span id="detailStartTime">N/A</span></p>
+        <p><strong>End Time:</strong> <span id="detailEndTime">N/A</span></p>
+        <p><strong>Status:</strong> <span id="detailStatus">N/A</span></p>
+        <p><strong>Total Time:</strong> <span id="detailTotalTime">N/A</span></p>
+        <p id="detailNotesP" style="display:none;"><strong>Notes:</strong> <span id="detailNotes">N/A</span></p>
+      </div>
 
-        <!-- Checkpoints Section -->
-        <div class="checkpoints">
-            <h2 class="section-title">Checkpoints</h2>
-            <ul class="checkpoints-list" id="checkpointsList">
-                <!-- Checkpoint entries will be dynamically inserted here -->
-            </ul>
-        </div>
+      <div class="checkpoints">
+        <h2 class="section-title">Checkpoints</h2>
+        <ul class="checkpoints-list" id="checkpointsList"></ul>
+      </div>
+    </section>
+
+    <div class="action-buttons">
+      <button class="back-btn secondary" onclick="goBack()">← Go Back</button>
     </div>
-    <div style="text-align: center;">
-        <button class="back-button" onclick="goBack()">← Go Back</button>
-    </div>
-  </div>
+  </main>
 
   <script src="../scripts/data.js"></script>
   <script src="../scripts/app.js"></script>
   <script src="../scripts/theme.js" defer></script>
   <script>
     let currentAdminUser = null;
-    let qrCodesMap = {}; // For quick lookup of QR code names
+    let qrCodesMap = {};
 
     document.addEventListener('DOMContentLoaded', function() {
       if (typeof initializeData === 'function') initializeData();
-      
+
       currentAdminUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
 
       if (!currentAdminUser || currentAdminUser.role !== 'admin') {
-        alert("Access Denied. You must be an admin to view this page.");
+        alert('Access Denied. You must be an admin to view this page.');
         document.getElementById('walkDetailsContainer').innerHTML = '<p class="error-message">Access Denied. Please log in as an admin.</p>';
-        // Optional: redirect after a delay or hide back button for non-admins
-        // window.location.href = 'admin-login.html'; 
         return;
       }
       document.getElementById('adminWelcomeMessage').textContent = `Logged in as: Admin ${currentAdminUser.username}`;
 
-      // Cache QR codes
       const qrCodes = getQrCodes();
       qrCodes.forEach(qr => qrCodesMap[qr.id] = qr.name);
-      
+
       loadWalkDetails();
     });
 
@@ -149,8 +78,8 @@
         return;
       }
 
-      const walk = getWalkDetails(walkId); // From app.js (which uses data.js)
-      const allUsers = getUsers(); // From data.js
+      const walk = getWalkDetails(walkId);
+      const allUsers = getUsers();
 
       if (!walk) {
         container.innerHTML = `<p class="error-message">Walk with ID '${walkId}' not found.</p>`;
@@ -185,7 +114,7 @@
       }
 
       const checkpointsList = document.getElementById('checkpointsList');
-      checkpointsList.innerHTML = ''; // Clear any static entries
+      checkpointsList.innerHTML = '';
 
       if (walk.checkpointScans && walk.checkpointScans.length > 0) {
         walk.checkpointScans.forEach(scan => {
@@ -193,17 +122,16 @@
           li.className = 'checkpoint-entry';
           const checkpointName = qrCodesMap[scan.checkpointId] || scan.checkpointId;
           const scannedAtTime = scan.scannedAt ? new Date(scan.scannedAt).toLocaleTimeString() : 'N/A';
-          
+
           li.innerHTML = `
             <p><strong>Checkpoint:</strong> ${checkpointName}</p>
             <p><strong>Status:</strong> <span class="status-${scan.status.toLowerCase()}">${scan.status.replace('_',' ')}</span></p>
             <p><strong>Scanned At:</strong> ${scannedAtTime}</p>
-            ${scan.reason ? `<p><strong>Reason:</strong> ${scan.reason}</p>` : ''}
           `;
           checkpointsList.appendChild(li);
         });
       } else {
-        checkpointsList.innerHTML = '<li>No checkpoint data available for this walk.</li>';
+        checkpointsList.innerHTML = '<li class="checkpoint-entry">No checkpoint scans recorded.</li>';
       }
     }
 

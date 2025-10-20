@@ -1,42 +1,49 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b152d">
   <title>User Dashboard - Secure Walkways</title>
-  <style>
-    /* [Keep your full CSS as-is, already well structured for dark/light mode] */
-    /* Skipping here to keep message compact, but use your original CSS exactly */
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../styles/main.css">
 </head>
 <body>
-  <div class="container">
-    <h2 id="welcomeMessage">Welcome, Officer!</h2>
+  <main class="container">
+    <header class="section">
+      <h2 id="welcomeMessage">Welcome, Officer!</h2>
+      <p class="subtitle">Monitor your patrol progress, scan checkpoints, and finish strong.</p>
+    </header>
 
-    <div id="activeWalkSection" class="section">
+    <section id="activeWalkSection" class="section" style="display: none;">
       <h3 class="section-title">Active Patrol Details</h3>
       <div id="activeWalkInfo">
         <p><strong>Walk ID:</strong> <span id="walkIdDisplay">N/A</span></p>
         <p><strong>Started:</strong> <span id="walkStartTimeDisplay">N/A</span></p>
       </div>
-      <p><strong>Progress:</strong></p>
+      <p class="section-title">Progress</p>
       <div class="progress-container">
-        <div id="progressBar">0%</div>
+        <span id="progressBar">0%</span>
       </div>
-      <h4 class="section-title" style="margin-top: 20px;">Checkpoints:</h4>
+      <h4 class="section-title" style="margin-top: 20px;">Checkpoints</h4>
       <ul id="checkpointsList"></ul>
-    </div>
+    </section>
 
-    <div id="noActiveWalkMessage" class="section" style="text-align: center;">
+    <section id="noActiveWalkMessage" class="section" style="text-align: center;">
       <p>No active patrol at the moment.</p>
-    </div>
+    </section>
 
     <div class="button-group">
       <button id="startPatrolButton" class="action-btn">Start Morning Patrol</button>
       <button id="scanQrButton" class="action-btn">Scan QR Code</button>
-      <button id="cancelWalkButton" class="action-btn">Cancel Current Walk</button>
-      <button id="logoutButton" class="action-btn">Logout</button>
+      <button id="cancelWalkButton" class="action-btn danger">Cancel Current Walk</button>
+      <button id="logoutButton" class="action-btn secondary">Logout</button>
     </div>
-  </div>
+  </main>
 
   <script src="../scripts/data.js"></script>
   <script src="../scripts/app.js"></script>
@@ -48,14 +55,14 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       if (typeof getCurrentUser !== 'function') {
-        alert("Error accessing user session. Please refresh.");
+        alert('Error accessing user session. Please refresh.');
         return;
       }
 
       currentUser = getCurrentUser();
 
       if (!currentUser) {
-        alert("You are not logged in. Redirecting to login page.");
+        alert('You are not logged in. Redirecting to login page.');
         window.location.href = '../pages/user-login.html';
         return;
       }
@@ -69,7 +76,7 @@
       });
       document.getElementById('scanQrButton').addEventListener('click', () => {
         if (activeWalk) window.location.href = 'qr-scan.html';
-        else alert("No active walk to scan QR codes for.");
+        else alert('No active walk to scan QR codes for.');
       });
       document.getElementById('cancelWalkButton').addEventListener('click', () => {
         handleCancelWalkRequest().catch(error => {
@@ -114,8 +121,8 @@
       if (activeWalk) {
         activeWalkSection.style.display = 'block';
         noActiveWalkMessage.style.display = 'none';
-        scanQrButton.style.display = 'inline-block';
-        cancelWalkButton.style.display = 'inline-block';
+        scanQrButton.style.display = 'inline-flex';
+        cancelWalkButton.style.display = 'inline-flex';
         startPatrolButton.style.display = 'none';
 
         document.getElementById('walkIdDisplay').textContent = activeWalk.id;
@@ -151,13 +158,13 @@
         noActiveWalkMessage.style.display = 'block';
         scanQrButton.style.display = 'none';
         cancelWalkButton.style.display = 'none';
-        startPatrolButton.style.display = 'inline-block';
+        startPatrolButton.style.display = 'inline-flex';
       }
     }
 
     async function handleStartPatrol() {
       if (!currentUser || typeof startWalk !== 'function') {
-        alert("Error: Cannot start patrol. Required functions missing.");
+        alert('Error: Cannot start patrol. Required functions missing.');
         return;
       }
 
@@ -166,27 +173,27 @@
         alert(`Patrol ${newWalk.id} started successfully!`);
         await renderDashboard();
       } else {
-        alert("Failed to start patrol. Ensure checkpoints are configured in the system.");
+        alert('Failed to start patrol. Ensure checkpoints are configured in the system.');
       }
     }
 
     async function handleCancelWalkRequest() {
       if (!activeWalk) {
-        alert("No active walk to cancel.");
+        alert('No active walk to cancel.');
         return;
       }
 
-      const reason = prompt("Enter reason for cancelling this walk:");
-      if (reason && reason.trim() !== "") {
+      const reason = prompt('Enter reason for cancelling this walk:');
+      if (reason && reason.trim() !== '') {
         const cancelledWalk = await cancelUserWalk(activeWalk.id, reason.trim());
         if (cancelledWalk) {
           alert(`Walk ${cancelledWalk.id} has been cancelled.`);
           await renderDashboard();
         } else {
-          alert("Failed to cancel walk. Check console.");
+          alert('Failed to cancel walk. Check console.');
         }
       } else if (reason !== null) {
-        alert("Cancellation reason cannot be empty.");
+        alert('Cancellation reason cannot be empty.');
       }
     }
 
