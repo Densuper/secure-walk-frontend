@@ -1,0 +1,1 @@
+-- Placeholder fixture for integration tests

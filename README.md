@@ -1,80 +1,63 @@
-# Secure Walkways Application
+# Secure Walkways (Swift Edition)
 
-Secure Walkways is a web application designed for managing and tracking security officer patrols using QR codes. It features separate interfaces for administrators and security officers (users).
+This repository now contains a complete Swift rewrite of the Secure Walkways platform. The project is organized as a Swift Package that bundles:
 
-## Overview
+- **SecureWalkwaysApp** – a SwiftUI client that replaces the browser-based dashboards for administrators and security officers.
+- **SecureWalkwaysServer** – a Vapor-based REST API with SQLite persistence that mirrors the original Node/Express backend.
 
-*   **Frontend:** HTML, CSS, and vanilla JavaScript. Located primarily in `index.html` and the `pages/` directory.
-*   **Backend:** Node.js with Express.js and SQLite. Located in the `backend/` directory.
+The two targets share the same data models and JSON contracts to make it easy to keep both components in sync.
 
-## Prerequisites
+## Requirements
 
-*   [Node.js](https://nodejs.org/) (v18 or later recommended)
-*   [npm](https://www.npmjs.com/) (bundled with Node.js)
-*   A modern desktop or mobile browser with camera support for QR scanning features
+- Xcode 15 or Swift 5.9 toolchain
+- SQLite 3 (bundled with macOS)
+- Swift Package Manager (SPM)
 
-## Installation and Setup
-
-1.  **Clone the repository and install dependencies:**
-    ```bash
-    git clone <repository-url>
-    cd secure-walk-frontend
-    npm install
-    ```
-    Running `npm install` from the repository root installs the shared developer tooling (Jest configuration, linters, etc.).
-
-2.  **Install backend dependencies and configure environment variables:**
-    ```bash
-    cd backend
-    npm install
-    ```
-    Create a `.env` file (or copy from a template if provided) so that `JWT_SECRET` is defined—the backend will refuse to start without it. Optionally set `SEED_DEMO_DATA=true` to load predictable demo users and checkpoints for local development.
-
-## Running the Application
-
-To run the Secure Walkways application, you need to have both the backend server running and the frontend accessible in a browser.
-
-### 1. Running the Backend
-
-From the `backend` directory, start the API server:
+## Running the Server
 
 ```bash
-node server.js
+swift run SecureWalkwaysServer
 ```
 
-The backend listens on `http://localhost:3000` by default. See [backend/README.md](backend/README.md) for deeper details on the av
-ailable environment variables, API endpoints, and tests.
+The server boots on `http://127.0.0.1:8080`, performs automatic SQLite migrations, and seeds initial accounts and checkpoints from `Seed/seed.sql`.
 
-### 2. Accessing the Frontend
+## Running the SwiftUI Client
 
-Once the backend server is running:
+Open the package in Xcode and select the `SecureWalkwaysApp` scheme. The app provides:
 
-*   Simply open the `index.html` file in your web browser.
-*   Alternatively, you can serve the root directory using a simple HTTP server (e.g., using Python's `http.server` or a VS Code Live Server extension).
+- **Admin Dashboard** – manage officers, checkpoints, and view walk history.
+- **Officer Patrol View** – scan QR codes, start and end walks.
+- **Authentication** – sign-in for both roles with JWT tokens stored in the keychain.
 
-The application will then be accessible, typically starting from the main login selection page.
+## Testing
 
-## Frontend Structure
+Server tests live under `Tests/SecureWalkwaysServerTests`. You can run them with:
 
-*   `index.html`: The main entry point of the application, offering choices for User or Admin login.
-*   `pages/`: Contains all other HTML pages for the application:
-    *   `user-login.html`, `admin-login.html`: Login pages.
-    *   `user-dashboard.html`: Dashboard for security officers to view scan history and initiate QR scanning.
-    *   `admin-dashboard.html`: Dashboard for administrators to access user management, walk histories, QR code management, and logs.
-    *   `qr-scan.html`: Page for scanning QR codes (uses device camera).
-    *   Other pages for displaying walk histories, details, user/QR management, and logs.
+```bash
+swift test
+```
 
-**Note:** The frontend pages make API calls to the backend server. Ensure the backend is running and accessible for the application to function correctly.
+The suite uses an in-memory SQLite database and seeded fixtures to verify authentication, checkpoint CRUD, and walk lifecycle behavior.
 
-## Default Users (for testing)
+## Repository Layout
 
-The backend is pre-populated with the following users when it initializes the database:
+```
+Package.swift
+Sources/
+  SecureWalkwaysApp/
+    Models/
+    Services/
+    ViewModels/
+    Views/
+    Resources/
+  SecureWalkwaysServer/
+    Controllers/
+    Migrations/
+    Models/
+    Seed/
+Tests/
+  SecureWalkwaysServerTests/
+    Fixtures/
+```
 
-*   **Admin:**
-    *   Username: `adminuser`
-    *   Password: `adminpass123`
-*   **User (Security Officer):**
-    *   Username: `testuser`
-    *   Password: `password123`
-
-These can be used to log in and test the application features.
+Feel free to extend the SwiftUI client with additional features or adapt the Vapor backend for deployment environments of your choice.

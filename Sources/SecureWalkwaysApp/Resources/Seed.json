@@ -1,0 +1,23 @@
+{
+  "users": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "Alice Admin",
+      "email": "admin@securewalk.app",
+      "role": "admin"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "name": "Oscar Officer",
+      "email": "officer@securewalk.app",
+      "role": "officer"
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "name": "Lobby",
+      "locationDescription": "Front entrance"
+    }
+  ]
+}
